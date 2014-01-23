@@ -42,16 +42,22 @@ var RECEIVE = 0x56, // receive cmd
 function Camera (hardware){
   this.hardware = hardware;
   this.uart = this.hardware.UART({baudrate : 115200});
-  this.spi = this.hardware.SPI();
+  // this.spi = this.hardware.SPI();
+  this.uart.on('data', this.parseData);
 }
 
-Camera.prototype.version = function (next){
+Camera.prototype.parseData = function (data){
+  console.log("got data", data);
+}
+
+Camera.prototype.version = function (){
   this.uart.write([RECEIVE, SERIAL_ID, GEN_VERSION, 0x00]);
-  this.uart.on('data', next(bytes));
 }
 
-Camera.prototype.takePicture = function(next) {
-
+Camera.prototype.takePicture = function() {
+  // needs to switch tessel to spi slave with cs on g3
+  this.uart.write([RECEIVE, SERIAL_ID, READ_FBUF, 0x0C, 0x00, 0x0F, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x30, 0xD8, 0x80, 0x0B]);
 }
 
 function connect (hardware, next) {
@@ -59,10 +65,9 @@ function connect (hardware, next) {
 }
 
 var camera = connect(tessel.port('A'));
-camera.version(function(version){
-  console.log("version", version);
-});
-camera.takePicture(function(err, buff){
-  // buff is the image buffer
-});
+camera.version();
+camera.takePicture();
+// camera.takePicture(function(err, buff){
+//   // buff is the image buffer
+// });
 
