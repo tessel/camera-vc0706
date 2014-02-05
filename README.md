@@ -1,19 +1,14 @@
 #Camera
 Driver for the camera-vc0706 Tessel camera module ([VC0706](http://www.southernstars.com/skycube/files/VC0706.pdf)).
 
-##Example
-```js
-need an example
-```
-
 ##Installation
 ```sh
 npm install camera-vc0706
 ```
 
-##Import
+##Example
 ```js
-var camera = connect(tessel.port('A'));
+var camera = require('camera-vc0706').connect(tessel.port('A'));
 ```
 
 ##Methods
