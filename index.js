@@ -1,4 +1,7 @@
 var tessel = require('tessel');
+var events = require('events');
+var hw = process.binding('hw');
+var util = require('util');
 
 var RECEIVE = 0x56, // receive cmd
     SEND = 0x76, // send cmd
@@ -41,31 +44,97 @@ var RECEIVE = 0x56, // receive cmd
 
 function Camera (hardware){
   this.hardware = hardware;
-  this.uart = this.hardware.UART({baudrate : 115200});
+  this.uart = hardware.UART({baudrate : 115200});
   // this.spi = this.hardware.SPI();
-  this.uart.on('data', this.parseData);
+  this.uart.on('data', this.parseData.bind(this));
+  hardware.gpio(3).setOutput().high();
+  // this.spi = this.hardware.SPI({clockSpeed: 13500000, cpol: 0, cpha:1});;
 }
+
+util.inherits(Camera, events.EventEmitter);
 
 Camera.prototype.parseData = function (data){
   console.log("got data", data);
 }
 
-Camera.prototype.version = function (){
-  this.uart.write([RECEIVE, SERIAL_ID, GEN_VERSION, 0x00]);
+Camera.prototype.readCommandType = function(){
+  // var txBuff = new Buffer([RECEIVE, SERIAL_ID, READ_DATA, 0x04, 0x05, 0x01, 0x00, 0x07]);
+  var txBuff = new Buffer([RECEIVE, SERIAL_ID, READ_DATA, 0x04, 0x05, 0x03, 0x80, 0x00]);
+  this.uart.write(txBuff);
 }
 
+Camera.prototype.version = function (next){
+  console.log("getting version");
+
+  // var rxBuff = new Buffer(16);
+  // var txBuff = new Buffer([RECEIVE, SERIAL_ID, GEN_VERSION, 0x00,
+  //   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+  // this.hardware.gpio(3).low();
+  // var ret = this.spi.transferSync(txBuff, rxBuff);
+  // this.hardware.gpio(3).high();
+  // console.log("version", ret);
+  this.uart.write(new Buffer([RECEIVE, SERIAL_ID, GEN_VERSION, 0x00]));
+  this.uart.once('data', next);
+}
+
+Camera.prototype.getFrameBufferLength = function(){
+  // find the current frame buffer length
+  var buffLenCmd = new Buffer([RECEIVE, SERIAL_ID, GET_FBUF_LEN, 0x01, 0x00]);
+  this.uart.write(buffLenCmd);
+}
+
+var hw = process.binding('hw');
+
 Camera.prototype.takePicture = function() {
-  // needs to switch tessel to spi slave with cs on g3
-  this.uart.write([RECEIVE, SERIAL_ID, READ_FBUF, 0x0C, 0x00, 0x0F, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x30, 0xD8, 0x80, 0x0B]);
+  var imgSize = 0x64; 
+  // switch into spi slave mode
+  var spi = this.hardware.SPI({role:'slave'});
+  // spi._initialize();
+  // console.log("initializing buffer", hw.SPI_SLAVE_MODE);
+  // var imgArr = new Array(imgSize);
+  
+  var rxBuff = new Buffer(imgSize);
+  // var imgArr = [];
+  // for(var i = 0; i<imgSize; i++){
+  //   imgArr.push(0);
+  // }
+  var txBuff = new Buffer(imgSize);
+  console.log("initialized buffer", rxBuff, rxBuff.length);
+  
+  var cmdBuf = new Buffer([RECEIVE, SERIAL_ID, READ_FBUF, 0x0C, 0x00, 0x0F, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x64, 0xFF, 0xFF]);
+  this.uart.write(cmdBuf);
+  // pull cs low
+  // this.hardware.gpio(3).low();
+  spi.transfer(txBuff, rxBuff, function(err, ret){
+    // this.hardware.gpio(3).high();
+    console.log("got this from the camera", ret);
+    spi.close();
+
+  });
+  // var ret = spi.transferSync(txBuff, rxBuff);
+
+  // var ret = spi.transferSync(txBuff, rxBuff);
+  // var rxbuf = spi.transferSync(txbuf, unused_rxbuf);
+
+  // disable spi
+  console.log("spi closed", ret);
+  return ret;
 }
 
 function connect (hardware, next) {
   return new Camera(hardware);
 }
 
+console.log("setting up")
 var camera = connect(tessel.port('A'));
-camera.version();
+// camera.readCommandType();
+// camera.version();
+// camera.version(function(err, version){
+  // console.log('version', version);
+// });
+console.log("taking pic");
+// camera.getFrameBufferLength();
 camera.takePicture();
 // camera.takePicture(function(err, buff){
 //   // buff is the image buffer
