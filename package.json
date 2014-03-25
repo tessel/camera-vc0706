@@ -1,0 +1,28 @@
+{
+  "name": "camera-vc0706",
+  "version": "0.0.1",
+  "description": "Library to run the camera-vc0706 Tessel module",
+  "main": "index.js",
+  "scripts": {
+    "test": "tessel push test/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:tessel/modules.git"
+  },
+
+  "author": "Jon McKay <jon@technical.io>",
+  "license": "MIT",
+  "readmeFilename": "README.md",
+  "directories": {
+    "example": "examples"
+  },
+  "keywords": [
+    "tessel",
+    "camera",
+    "technical machine"
+  ],
+  "dependencies" : {
+    "vclib" :"*"
+  }
+}

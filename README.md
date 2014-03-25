@@ -6,18 +6,33 @@ Driver for the camera-vc0706 Tessel camera module ([VC0706](http://www.southerns
 npm install camera-vc0706
 ```
 
-##Example
-```js
-var camera = require('camera-vc0706').connect(tessel.port('A'));
+##Methods
+```.js
+
+// Take a still picture. Returns raw buffer data which you can pipe into a raw http stream or save in memory
+camera.takePicture( function(err, picture) {...} );
+
+// Set the size of images.
+// Options are vga' (640x320), 'qvga'(320x240) or 'qqvga' (160x120). Default is 'vga'.
+camera.setResolution( resolution, function(err) {...} );
+
+// Determine the amount of compression on each image. 
+// Should be a number between 0 and 255. Default is 0x35. 
+camera.setCompression(compressionFactor, function(err) {...} );
 ```
 
-##Methods
+## Events
+```.js
+// The camera is ready to receive commands
+camera.on('ready', function() {...} );
 
-*  **`camera`.parseData(data)**
+// The camera was unable to initialize
+camera.on('error', function(err) {...} );
 
-*  **`camera`.version()**
+// A photo was taken
+camera.on('picture', function(picture) {...} );
+```
 
-*  **`camera`.takePicture()**
 
 ## License
 
