@@ -1,46 +1,39 @@
 var tessel = require('tessel');
 var port = tessel.port('a');
 
+function sendFile(buf) {
+  process.binding('hw').usb_send(0xFFFF, buf);
+}
+
 var camera = require('../index').use(port, function(err) {
   if (err) {
     return console.log(err);
   }
   else {
-    // console.log('taking picture');
-    camera.takePicture(function(err, image) {
-      console.log('taken!', image.length);
-      // console.log("picture result", err, image);
-      // console.log(image.toString());
-      printBufferLines(image);
-      // printBufferBase64(image);
-    });
+    // camera.setResolution('vga', function(err) {
+    //   if (err) console.log("Error setting resolution", err);
+    //   console.log("Resolution set!");
+    //   camera.setCompression(0, function(err) {
+    //     if (err) console.log("Error setting compression", err);
+    //     console.log("Compression set!")
+        // setInterval(function snapper() {
+          camera.takePicture(function(err, image) {
+            if (err) {
+              return console.log("error taking image", err);
+            }
+            else {
+              console.log("picture result", image.length);
+              sendFile(image);
+            }
+          });
+        // }, 5000);
+      // });
+    // });
   }
 });
 
-function printBufferLines(ret) {
-  var iter = ret.length/10;
-  for (var i = 0; i < iter; i++) {
-    console.log(i+1, ret.slice(i * 10, (i*10) + 10));
-  }
-  console.log("\n\n");
-}
-
-function printBufferBase64(image) {
-  var chunkSize = 10;
-  var chunks = (image.length/chunkSize) - 1;
-  var fin = image.length%chunkSize;
-  for (var i = 0; i < chunks; i++) {
-    var start = i * chunkSize;
-    var end = start  + chunkSize;
-    console.log(image.slice(start, end).toString('base64'));
-  }
-
-  // console.log(image.slice((chunks) * chunkSize, (chunks*chunkSize) + fin).toString('base64'));
-
-}
-
 camera.on('ready', function() {
-  // console.log("We're ready!");
+  console.log("We're ready!");
 });
 
 camera.on('error', function(err) {
@@ -48,8 +41,16 @@ camera.on('error', function(err) {
 })
 
 camera.on('picture', function(image) {
-  // console.log("Took a picture", image);
+  console.log("Took a picture", image);
 });
+
+camera.on('resolution', function(resolution) {
+  console.log("Resolution was set!", resolution);
+});
+
+camera.on('compression', function(compression) {
+  console.log("Resolution was set!", compression);
+})
 
 setInterval(function() {}, 20000);
 
