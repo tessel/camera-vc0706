@@ -1,6 +1,6 @@
 {
   "name": "camera-vc0706",
-  "version": "0.0.16",
+  "version": "0.0.2",
   "description": "Library to run the camera-vc0706 Tessel module",
   "main": "index.js",
   "scripts": {
@@ -23,6 +23,7 @@
     "technical machine"
   ],
   "dependencies" : {
-    "vclib" :"*"
+    "vclib" :"*",
+    "async" : "*"
   }
 }

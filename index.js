@@ -107,25 +107,34 @@ Camera.prototype.setCompression = function(compression, next) {
  as opposed to UART.
 ****************************************/
 Camera.prototype.takePicture = function(next) {
- 
   // Get data about how many bytes to read
-  this._getImageMetaData(function foundMetaData(imageLength) {
-    // Capture the actual data
-    this._captureImageData(imageLength, function imageCaptured(image) {
-      // Wait for the camera to be ready to continue
-      this._resolveCapture(image, next);
-    }.bind(this));
+  this._getImageMetaData(function foundMetaData(err, imageLength) {
+    if (err) {
+      return next && next(err);
+    }
+    else {
+      // Capture the actual data
+      this._captureImageData(imageLength, function imageCaptured(err, image) {
+        // Wait for the camera to be ready to continue
+        if (err) {
+          return next && next(err);
+        }
+        else {
+          this._resolveCapture(image, next);
+        }
+      }.bind(this));
+    }
   }.bind(this));
 }
 
 Camera.prototype._getImageMetaData = function(next) {
   // Stop the frame buffer (capture the image...)
-  // this._stopFrameBuffer(function imageFrameStopped(err) {
+  this._stopFrameBuffer(function imageFrameStopped(err) {
 
-    // if (err) {
-      // return next && next(err);
-    // }
-    // else {
+    if (err) {
+      return next && next(err);
+    }
+    else {
       // Get the size of the image to capture
       this._getFrameBufferLength(function imageLengthRead(err, imgSize) {
         // If there was a problem, report it
@@ -134,11 +143,11 @@ Camera.prototype._getImageMetaData = function(next) {
         }
         // If not
         else {
-          return next && next(imgSize);
+          return next && next(null, imgSize);
         }
       }.bind(this));
-    // }
-  // }.bind(this));
+    }
+  }.bind(this));
 }
 
 Camera.prototype._captureImageData = function(imgSize, next) {
@@ -160,6 +169,7 @@ Camera.prototype._captureImageData = function(imgSize, next) {
     else {
       // Begin the transfer
       spi.transfer(txBuff, rxBuff, function imageDataRead(err, image){
+
         // If there was a problem, report it
         if (err) {
           return next && next(err);
@@ -169,7 +179,7 @@ Camera.prototype._captureImageData = function(imgSize, next) {
           // Close SPI
           spi.close();
 
-          return next && next(image);
+          return next && next(null, image);
         }
       }.bind(this));
     }
@@ -185,20 +195,25 @@ Camera.prototype._resolveCapture = function(image, next) {
     }
     else {
       // Resume frame capturing again
-      // this._resumeFrameBuffer(function frameResumed(err) {
+      this._resumeFrameBuffer(function frameResumed(err) {
         // Report any errors
-        // if (err) {
-          // return next && next(err);
-        // }
-        // else {
-          // Emit the picture
-          setImmediate(function() {
-            this.emit('picture', image);
-          }.bind(this));
-          // Call the callback
-          next && next(null, image);
-        // }
-      // }.bind(this));
+        if (err) {
+          return next && next(err);
+        }
+        else {
+          this._reset(function(err) {
+            // Call the callback
+            next && next(err, image);
+
+            if (!err) {
+              // Emit the picture
+              setImmediate(function() {
+                this.emit('picture', image);
+              }.bind(this));
+            }
+          }.bind(this))
+        }
+      }.bind(this));
     }
   }.bind(this));
 }
@@ -230,7 +245,7 @@ Camera.prototype._reset = function(next) {
     // If there was no problem
     else {
       // Wait for the camera to reset
-      setTimeout(next, 2000);
+      setTimeout(next, 300);
     }
   });
 }
@@ -269,23 +284,7 @@ Camera.prototype._sendCommand = function(apiCommand, args, next) {
       return next && next(err);
     }
 
-    // Set up a temporary listener... listening for response
-    self.uart.on('data', UARTDataParser);
-    // Send the command data
-    self.uart.write(command.buffer);
-
-    timeout = setTimeout(function noResponse() {
-      // Remove the listener
-      self.uart.removeListeners('data', UARTDataParser);
-      
-      // Throw an error
-      next & next(new Error("No UART Response..."));
-
-    }, 2000);
-  });
-}
-
-function UARTDataParser(data) {
+    function UARTDataParser(data) {
       // Try to parse the response (might take several calls)
       self.vclib.parseIncoming(command, data, function(err, packet) {
 
@@ -302,6 +301,23 @@ function UARTDataParser(data) {
         }
       });
     }
+
+    // Set up a temporary listener... listening for response
+    self.uart.on('data', UARTDataParser);
+    // Send the command data
+    self.uart.write(command.buffer);
+
+    timeout = setTimeout(function noResponse() {
+      // Remove the listener
+      self.uart.removeListener('data', UARTDataParser);
+      
+      // Throw an error
+      next & next(new Error("No UART Response..."));
+
+    }, 2000);
+  });
+}
+
 
 module.exports.use = use;
 module.exports.Camera = Camera;
