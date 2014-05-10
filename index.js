@@ -176,10 +176,6 @@ Camera.prototype._captureImageData = function(imgSize, next) {
    // Intialize SPI
   var spi = this.hardware.SPI({role:'slave'});
 
-  // Set up our tx/rx buffers
-  var rxBuff = new Buffer(imgSize);
-  var txBuff = new Buffer(imgSize);
-
   // Send the command to read the number of bytes
   this._readFrameBuffer(imgSize, function imageReadCommandSent(err) {
     // If there was a problem report it
@@ -191,7 +187,7 @@ Camera.prototype._captureImageData = function(imgSize, next) {
     // If not
     else {
       // Begin the transfer
-      spi.transfer(txBuff, rxBuff, function imageDataRead(err, image){
+      spi.receive(imgSize, function imageDataRead(err, image){
 
         // If there was a problem, report it
         if (err) {
