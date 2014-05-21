@@ -24,7 +24,7 @@ function Camera (hardware, next){
   // Start up UART
   this.uart = hardware.UART({baudrate : 115200});
   // Turn the camera on!
-  hardware.gpio(3).setOutput().high();
+  hardware.digital[3].output().high();
 
   // Attempt to read the version of firmware
   this.getVersion(function(err, version) {
@@ -169,6 +169,14 @@ Camera.prototype._getImageMetaData = function(next) {
       }.bind(this));
     }
   }.bind(this));
+};
+
+/****
+ Close camera connection.
+ **/
+
+Camera.prototype.close = function () {
+  this.uart.disable();
 };
 
 Camera.prototype._captureImageData = function(imgSize, next) {
