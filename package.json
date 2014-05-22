@@ -4,13 +4,12 @@
   "description": "Library to run the camera-vc0706 Tessel module",
   "main": "index.js",
   "scripts": {
-    "test": "tessel push test/test.js"
+    "test": "./testsuite.js"
   },
   "repository": {
     "type": "git",
     "url": "git@github.com:tessel/modules.git"
   },
-
   "author": "Jon McKay <jon@technical.io>",
   "license": "MIT",
   "readmeFilename": "README.md",
@@ -22,8 +21,19 @@
     "camera",
     "technical machine"
   ],
-  "dependencies" : {
-    "vclib" :"*",
-    "async" : "*"
+  "hardware": {
+    "shelljs": false,
+    "tape": false,
+    "tap": false
+  },
+  "dependencies": {
+    "vclib": "*",
+    "async": "*"
+  },
+  "devDependencies": {
+    "jpeg-size": "0.0.1",
+    "shelljs": "~0.3.0",
+    "tape": "~2.13.1",
+    "tap": "git+https://github.com/tcr/node-tap.git#3cb76e"
   }
 }

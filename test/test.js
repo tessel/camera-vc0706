@@ -1,68 +1,40 @@
+var jpegSize = require('jpeg-size');
 var tessel = require('tessel');
-var port = tessel.port('a');
-var async = require('async');
-var http;
 
-// Only 
-function sendFile(buf) {
-  process.binding('hw').usb_send(0xFFFF, buf);
-}
+var port = tessel.port['A'];
+var camera = require('../').use(port);
 
-var camera = require('../index').use(port, function(err) {
-  if (err) {
-    return console.log(err);
-  }
-  else {
-    camera.setResolution('vga', function(err) {
-      if (err) return console.log("Error setting resolution", err);
-      camera.setCompression(100, function(err) {
-        if (err) return console.log("Error setting compression", err);
-        else {
-          async.whilst(
-            function () { return true; },
-            function (callback) {
-              camera.takePicture(function(err, image) {
-                if (err) {
-                  console.log("error taking image", err);
-                }
-                else {
-                  console.log("picture length", image.length);
-                  sendFile(image);
-                }
-                callback();
+console.log('1..7');
 
-              });
-            },
-            function (err) {
-                console.log('damn, there was an error');
-            }
-          );
-        }
+camera.on('ready', function(err) {
+  if (err) return console.log('not ok - error on ready:', err);
+  console.log('ok - camera ready');
+
+  camera.setResolution('vga', function(err) {
+    if (err) return console.log('not ok - error setting resolution:', err);
+    console.log('ok - resolution set');
+
+    camera.setCompression(100, function(err) {
+      if (err) return console.log('not ok - error setting compression:', err);
+      console.log('ok - compression set');
+
+      camera.takePicture(function(err, image) {
+        if (err) return console.log('not ok - error taking image:', err);
+        console.log('ok - successfuly took image');
+
+        console.log(image.length > 0 ? 'ok' : 'not ok', '- picture length');
+
+        var size = jpegSize(image);
+        console.log(size.height == 480 ? 'ok' : 'not ok', '- jpeg height');
+        console.log(size.width == 640 ? 'ok' : 'not ok', '- jpeg width');
+
+        console.log('# done.');
+        camera.close();
       });
     });
-  }
+  });
 });
 
-camera.on('ready', function() {
-  console.log("We're ready!");
+camera.on('error', function (err) {
+  console.log('not ok', '-', err);
 });
-
-camera.on('error', function(err) {
-  console.log("Error connecting", err);
-});
-
-camera.on('picture', function(image) {
-  console.log("Took a picture", image);
-});
-
-camera.on('resolution', function(resolution) {
-  console.log("Resolution was set!", resolution);
-});
-
-camera.on('compression', function(compression) {
-  console.log("Compression was set!", compression);
-});
-
-setInterval(function() {}, 20000);
-
-
