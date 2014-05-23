@@ -41,115 +41,6 @@ function Camera (hardware, next){
 
 util.inherits(Camera, events.EventEmitter);
 
-// Get the version of firmware on the camera. Typically only used for debugging.
-Camera.prototype._getVersion = function (next){
-  this._sendCommand("version", next);
-};
-
-// Set the resolution of the images captured. Automatically resets the camera and returns after completion.
-Camera.prototype.setResolution = function(resolution, next) {
-  this._sendCommand("resolution", {"size":resolution}, function(err) {
-    if (err) {
-
-      if (next) next(err);
-
-      return;
-    }
-    else {
-      this._reset(function(err) {
-
-        if (next) next(err);
-
-        setImmediate(function() {
-          this.emit('resolution', resolution);
-        }.bind(this));
-
-      }.bind(this));
-    }
-  }.bind(this));
-};
-
-// Set the compression of the images captured. Automatically resets the camera and returns after completion.
-Camera.prototype.setCompression = function(compression, next) {
-  this._sendCommand("compression", {"ratio":compression}, function(err) {
-    if (err) {
-      if (next) next(err);
-      return;
-    }
-    else {
-      this._reset(function(err) {
-
-        if (next) next(err);
-
-        setImmediate(function() {
-          this.emit('compression', compression);
-        }.bind(this));
-
-        return;
-      }.bind(this));
-    }
-  }.bind(this));
-};
-
-// Primary method for capturing an image. Actually transfers the image over SPI Slave as opposed to UART.
-Camera.prototype.takePicture = function(next) {
-  // Get data about how many bytes to read
-  this._getImageMetaData(function foundMetaData(err, imageLength) {
-    if (err) {
-      if (next) next(err);
-      return;
-    }
-    else {
-      // Capture the actual data
-      this._captureImageData(imageLength, function imageCaptured(err, image) {
-        // Wait for the camera to be ready to continue
-        if (err) {
-          if (next) next(err);
-
-          return;
-        }
-        else {
-          this._resolveCapture(image, next);
-        }
-      }.bind(this));
-    }
-  }.bind(this));
-};
-
-Camera.prototype._getImageMetaData = function(next) {
-  // Stop the frame buffer (capture the image...)
-  this._stopFrameBuffer(function imageFrameStopped(err) {
-
-    if (err) {
-      if (next) next(err);
-
-      return;
-    }
-    else {
-      // Get the size of the image to capture
-      this._getFrameBufferLength(function imageLengthRead(err, imgSize) {
-        // If there was a problem, report it
-        if (err) {
-          if (next) next(err);
-
-          return;
-        }
-        // If not
-        else {
-          if (next) next(null, imgSize);
-
-          return;
-        }
-      }.bind(this));
-    }
-  }.bind(this));
-};
-
-// Close camera connection
-Camera.prototype.close = function () {
-  this.uart.disable();
-};
-
 Camera.prototype._captureImageData = function(imgSize, next) {
 
    // Intialize SPI
@@ -188,6 +79,66 @@ Camera.prototype._captureImageData = function(imgSize, next) {
   }.bind(this));
 };
 
+Camera.prototype._getFrameBufferLength = function(next) {
+  this._sendCommand("bufferLength", next);
+};
+
+Camera.prototype._getImageMetaData = function(next) {
+  // Stop the frame buffer (capture the image...)
+  this._stopFrameBuffer(function imageFrameStopped(err) {
+
+    if (err) {
+      if (next) next(err);
+
+      return;
+    }
+    else {
+      // Get the size of the image to capture
+      this._getFrameBufferLength(function imageLengthRead(err, imgSize) {
+        // If there was a problem, report it
+        if (err) {
+          if (next) next(err);
+
+          return;
+        }
+        // If not
+        else {
+          if (next) next(null, imgSize);
+
+          return;
+        }
+      }.bind(this));
+    }
+  }.bind(this));
+};
+
+// Get the version of firmware on the camera. Typically only used for debugging.
+Camera.prototype._getVersion = function (next){
+  this._sendCommand("version", next);
+};
+
+Camera.prototype._readFrameBuffer = function(length, next) {
+  this._sendCommand("readFrameSPI", {"length":length}, next);
+};
+
+Camera.prototype._reset = function(next) {
+  // Tell the module to reset
+  this._sendCommand('reset', function(err) {
+    // If there was a problem
+    if (err) {
+      // Report it immediately
+      if (next) next(err);
+
+      return;
+    }
+    // If there was no problem
+    else {
+      // Wait for the camera to reset
+      setTimeout(next, 300);
+    }
+  });
+};
+
 Camera.prototype._resolveCapture = function(image, next) {
   // Wait for the camera to tell us it's finished
   this._waitForImageReadACK(function ACKed(err) {
@@ -220,55 +171,8 @@ Camera.prototype._resolveCapture = function(image, next) {
   }.bind(this));
 };
 
-Camera.prototype._getFrameBufferLength = function(next) {
-  this._sendCommand("bufferLength", next);
-};
-
-Camera.prototype._readFrameBuffer = function(length, next) {
-  this._sendCommand("readFrameSPI", {"length":length}, next);
-};
-
-Camera.prototype._stopFrameBuffer = function(next) {
-  this._sendCommand("frameControl", {command:'stop'}, next);
-};
-
 Camera.prototype._resumeFrameBuffer = function(next) {
   this._sendCommand("frameControl", {command:'resume'}, next);
-};
-
-Camera.prototype._reset = function(next) {
-  // Tell the module to reset
-  this._sendCommand('reset', function(err) {
-    // If there was a problem
-    if (err) {
-      // Report it immediately
-      if (next) next(err);
-
-      return;
-    }
-    // If there was no problem
-    else {
-      // Wait for the camera to reset
-      setTimeout(next, 300);
-    }
-  });
-};
-
-Camera.prototype._waitForImageReadACK = function(next) {
-  var self = this;
-  self.vclib.getCommandPacket('readFrameSPI', function foundCommand(err, command) {
-    self.uart.on('data', function dataACKParsing(data) {
-      self.vclib.parseIncoming(command, data, function vclibDataParsed(err, packet) {
-        if (err || packet) {
-
-          self.uart.removeListener('data', dataACKParsing);
-
-          if (next) next(err);
-          return;
-        }
-      });
-    });
-  });
 };
 
 Camera.prototype._sendCommand = function(apiCommand, args, next) {
@@ -329,6 +233,102 @@ Camera.prototype._sendCommand = function(apiCommand, args, next) {
 
     }, 2000);
   });
+};
+
+Camera.prototype._stopFrameBuffer = function(next) {
+  this._sendCommand("frameControl", {command:'stop'}, next);
+};
+
+Camera.prototype._waitForImageReadACK = function(next) {
+  var self = this;
+  self.vclib.getCommandPacket('readFrameSPI', function foundCommand(err, command) {
+    self.uart.on('data', function dataACKParsing(data) {
+      self.vclib.parseIncoming(command, data, function vclibDataParsed(err, packet) {
+        if (err || packet) {
+
+          self.uart.removeListener('data', dataACKParsing);
+
+          if (next) next(err);
+          return;
+        }
+      });
+    });
+  });
+};
+
+// Close camera connection
+Camera.prototype.close = function () {
+  this.uart.disable();
+};
+
+// Set the compression of the images captured. Automatically resets the camera and returns after completion.
+Camera.prototype.setCompression = function(compression, next) {
+  this._sendCommand("compression", {"ratio":compression}, function(err) {
+    if (err) {
+      if (next) next(err);
+      return;
+    }
+    else {
+      this._reset(function(err) {
+
+        if (next) next(err);
+
+        setImmediate(function() {
+          this.emit('compression', compression);
+        }.bind(this));
+
+        return;
+      }.bind(this));
+    }
+  }.bind(this));
+};
+
+// Set the resolution of the images captured. Automatically resets the camera and returns after completion.
+Camera.prototype.setResolution = function(resolution, next) {
+  this._sendCommand("resolution", {"size":resolution}, function(err) {
+    if (err) {
+
+      if (next) next(err);
+
+      return;
+    }
+    else {
+      this._reset(function(err) {
+
+        if (next) next(err);
+
+        setImmediate(function() {
+          this.emit('resolution', resolution);
+        }.bind(this));
+
+      }.bind(this));
+    }
+  }.bind(this));
+};
+
+// Primary method for capturing an image. Actually transfers the image over SPI Slave as opposed to UART.
+Camera.prototype.takePicture = function(next) {
+  // Get data about how many bytes to read
+  this._getImageMetaData(function foundMetaData(err, imageLength) {
+    if (err) {
+      if (next) next(err);
+      return;
+    }
+    else {
+      // Capture the actual data
+      this._captureImageData(imageLength, function imageCaptured(err, image) {
+        // Wait for the camera to be ready to continue
+        if (err) {
+          if (next) next(err);
+
+          return;
+        }
+        else {
+          this._resolveCapture(image, next);
+        }
+      }.bind(this));
+    }
+  }.bind(this));
 };
 
 function use(hardware, next) {
