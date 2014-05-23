@@ -41,19 +41,12 @@ function Camera (hardware, next){
 
 util.inherits(Camera, events.EventEmitter);
 
-/****************************************
- Get the version of firmware on the camera.
- Typically only used for debugging.
-****************************************/
-Camera.prototype.getVersion = function (next){
+// Get the version of firmware on the camera. Typically only used for debugging.
+Camera.prototype._getVersion = function (next){
   this._sendCommand("version", next);
 };
 
-/****************************************
- Set the resolution of the images captured.
- Automatically resets the camera and returns
- after completion.
-****************************************/
+// Set the resolution of the images captured. Automatically resets the camera and returns after completion.
 Camera.prototype.setResolution = function(resolution, next) {
   this._sendCommand("resolution", {"size":resolution}, function(err) {
     if (err) {
@@ -76,11 +69,7 @@ Camera.prototype.setResolution = function(resolution, next) {
   }.bind(this));
 };
 
-/****************************************
- Set the compression of the images captured.
- Automatically resets the camera and returns
- after completion.
-****************************************/
+// Set the compression of the images captured. Automatically resets the camera and returns after completion.
 Camera.prototype.setCompression = function(compression, next) {
   this._sendCommand("compression", {"ratio":compression}, function(err) {
     if (err) {
@@ -102,11 +91,7 @@ Camera.prototype.setCompression = function(compression, next) {
   }.bind(this));
 };
 
-/****************************************
- Primary method for capturing an image.
- Actually transfers the image over SPI Slave
- as opposed to UART.
-****************************************/
+// Primary method for capturing an image. Actually transfers the image over SPI Slave as opposed to UART.
 Camera.prototype.takePicture = function(next) {
   // Get data about how many bytes to read
   this._getImageMetaData(function foundMetaData(err, imageLength) {
@@ -160,10 +145,7 @@ Camera.prototype._getImageMetaData = function(next) {
   }.bind(this));
 };
 
-/****
- Close camera connection.
- **/
-
+// Close camera connection
 Camera.prototype.close = function () {
   this.uart.disable();
 };
@@ -354,5 +336,5 @@ function use(hardware, next) {
   return camera;
 }
 
-module.exports.use = use;
 module.exports.Camera = Camera;
+module.exports.use = use;
