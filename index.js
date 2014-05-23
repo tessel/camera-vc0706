@@ -5,17 +5,6 @@ var vclib = require('vclib');
 
 var DEBUG = false;
 
-/****************************************
- Entry Point: Returns Camera object
-****************************************/
-function use(hardware, next) {
-  var camera = new Camera(hardware, next);
-  return camera;
-}
-
-/****************************************
- Camera object
-****************************************/
 function Camera (hardware, next){
   // Set the port
   this.hardware = hardware;
@@ -298,7 +287,7 @@ Camera.prototype._waitForImageReadACK = function(next) {
       });
     });
   });
-}; 
+};
 
 Camera.prototype._sendCommand = function(apiCommand, args, next) {
   // If Args weren't passed in, correct the callback
@@ -350,7 +339,7 @@ Camera.prototype._sendCommand = function(apiCommand, args, next) {
     timeout = setTimeout(function noResponse() {
       // Remove the listener
       self.uart.removeListener('data', UARTDataParser);
-      
+
       // Throw an error
       if (next) next(new Error("No UART Response..."));
 
@@ -360,7 +349,10 @@ Camera.prototype._sendCommand = function(apiCommand, args, next) {
   });
 };
 
+function use(hardware, next) {
+  var camera = new Camera(hardware, next);
+  return camera;
+}
 
 module.exports.use = use;
 module.exports.Camera = Camera;
-
