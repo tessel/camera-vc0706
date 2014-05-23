@@ -1,8 +1,10 @@
 var jpegSize = require('jpeg-size');
 var tessel = require('tessel');
 
-var port = tessel.port['A'];
-var camera = require('../').use(port);
+var portname = process.argv[2] || 'A';
+console.log('# listening on port', portname)
+
+var camera = require('../').use(tessel.port[portname]);
 
 console.log('1..7');
 

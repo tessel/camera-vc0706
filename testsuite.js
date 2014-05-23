@@ -2,7 +2,7 @@
 
 require('shelljs/global');
 
-var port = process.env.GPS_PORT || 'A';
+var port = process.env.CAMERA_PORT || 'A';
 var cmd = './node_modules/.bin/tap -e "tessel run {} ' + port + '" test/*.js';
 
 // execute
