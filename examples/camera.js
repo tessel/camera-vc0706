@@ -34,7 +34,7 @@ camera.on('ready', function(err) {
               console.log('uploading as', name);
               process.sendfile(name, image);
               console.log('done.');
-              camera.close();
+              camera.disable();
             }
           });
         }

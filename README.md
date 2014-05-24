@@ -44,7 +44,7 @@ camera.on('ready', function(err) {
               console.log('uploading as', name);
               process.sendfile(name, image);
               console.log('done.');
-              camera.close();
+              camera.disable();
             }
           });
         }
@@ -59,21 +59,14 @@ camera.on('error', function(err) {
 ```
 
 ##Methods
-```js
 
-// Take a still picture. Returns raw buffer data which you can pipe into a raw http stream or save in memory
-camera.takePicture( function(err, picture) {...} );
+##### * `camera.disable()` Disable UART connection to camera. Closes connection & ends process.
 
-// Set the size of images.
-// Options are vga' (640x320), 'qvga'(320x240) or 'qqvga' (160x120). Default is 'vga'.
-// Note that the resolution is saved in Flash and will be persisted between power cycles
-camera.setResolution( resolution, function(err) {...} );
+##### * `camera.setCompression(compressionFactor, callback(err))` Determine the amount of compression on each image. Should be a number between 0 and 255. Default is 0x35. Note that the compression is saved in Flash and will be persisted between power cycles.
 
-// Determine the amount of compression on each image.
-// Should be a number between 0 and 255. Default is 0x35.
-// Note that the compression is saved in Flash and will be persisted between power cycles
-camera.setCompression(compressionFactor, function(err) {...} );
-```
+##### * `camera.setResolution(resolution, callback(err))` Set the size of images. Options are vga' (640x320), 'qvga'(320x240) or 'qqvga' (160x120). Default is 'vga'. Note that the resolution is saved in Flash and will be persisted between power cycles.
+
+##### * `camera.takePicture(callback(err, picture))` Take a still picture. Returns raw buffer data which you can pipe into a raw http stream or save in memory.
 
 ## Events
 ```.js

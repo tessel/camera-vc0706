@@ -257,7 +257,7 @@ Camera.prototype._waitForImageReadACK = function(callback) {
 };
 
 // Close camera connection
-Camera.prototype.close = function () {
+Camera.prototype.disable = function () {
   this.uart.disable();
 };
 
