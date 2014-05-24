@@ -4,7 +4,7 @@
   "description": "Library to run the camera-vc0706 Tessel module",
   "main": "index.js",
   "scripts": {
-    "test": "tinytap -e 'tessel run {} ${BLE_PORT1}' test/*.js"
+    "test": "tinytap -e 'tessel run {} ${CAMERA_PORT}' test/*.js"
   },
   "repository": {
     "type": "git",
