@@ -8,14 +8,14 @@ npm install camera-vc0706
 
 ##Example
 ```js
+// Any copyright is dedicated to the Public Domain.
+// http://creativecommons.org/publicdomain/zero/1.0/
+
 /*********************************************
 This camera example takes a picture. If a
 directory is specified with the --upload-dir
 flag, the picture is saved to that directory.
 *********************************************/
-
-// Any copyright is dedicated to the Public Domain.
-// http://creativecommons.org/publicdomain/zero/1.0/
 
 var tessel = require('tessel');
 var camera = require('../').use(tessel.port['A']); // Replace '../' with 'camera-vc0706' in your own code

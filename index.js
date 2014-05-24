@@ -14,7 +14,7 @@ var vclib = require('vclib');
 
 var DEBUG = false;
 
-function Camera (hardware, callback){
+function Camera (hardware, callback) {
   // Set the port
   this.hardware = hardware;
   // Set a new library for sending/receiving data
@@ -32,9 +32,7 @@ function Camera (hardware, callback){
       setImmediate(function() {
         this.emit('error', new Error("Unable to receive responses from module."));
       }.bind(this));
-    }
-    // If there was no problem
-    else {
+    } else {
       // Report that we are open for business
       setImmediate(function() {
         this.emit('ready');
@@ -42,7 +40,9 @@ function Camera (hardware, callback){
     }
 
     // Call the callback
-    if (callback) callback(err, this);
+    if (callback) {
+      callback(err, this);
+    }
     return this;
 
   }.bind(this));
@@ -57,30 +57,28 @@ Camera.prototype._captureImageData = function(imgSize, callback) {
 
   // Send the command to read the number of bytes
   this._readFrameBuffer(imgSize, function imageReadCommandSent(err) {
-    // If there was a problem report it
+    // If there was a problem, report it
     if (err) {
-      if (callback) callback(err);
-
+      if (callback) {
+        callback(err);
+      }
       return;
-    }
-    // If not
-    else {
+    } else {
       // Begin the transfer
       spi.receive(imgSize, function imageDataRead(err, image){
 
         // If there was a problem, report it
         if (err) {
-          if (callback) callback(err);
-
+          if (callback) {
+            callback(err);
+          }
           return;
-        }
-        // If not
-        else {
+        } else {
           // Close SPI
           spi.close();
-
-          if (callback) callback(null, image);
-
+          if (callback) {
+            callback(null, image);
+          }
           return;
         }
       }.bind(this));
@@ -97,23 +95,23 @@ Camera.prototype._getImageMetaData = function(callback) {
   this._stopFrameBuffer(function imageFrameStopped(err) {
 
     if (err) {
-      if (callback) callback(err);
-
+      if (callback) {
+        callback(err);
+      }
       return;
-    }
-    else {
+    } else {
       // Get the size of the image to capture
       this._getFrameBufferLength(function imageLengthRead(err, imgSize) {
         // If there was a problem, report it
         if (err) {
-          if (callback) callback(err);
-
+          if (callback) {
+            callback(err);
+          }
           return;
-        }
-        // If not
-        else {
-          if (callback) callback(null, imgSize);
-
+        } else {
+          if (callback) {
+            callback(null, imgSize);
+          }
           return;
         }
       }.bind(this));
@@ -136,12 +134,8 @@ Camera.prototype._reset = function(callback) {
     // If there was a problem
     if (err) {
       // Report it immediately
-      if (callback) callback(err);
-
-      return;
-    }
-    // If there was no problem
-    else {
+      callback(err);
+    } else {
       // Wait for the camera to reset
       setTimeout(callback, 300);
     }
@@ -153,24 +147,25 @@ Camera.prototype._resolveCapture = function(image, callback) {
   this._waitForImageReadACK(function ACKed(err) {
     // Report any errors
     if (err) {
-      if (callback) callback(err);
-
+      if (callback) {
+        callback(err);
+      }
       return;
-    }
-    else {
+    } else {
       // Resume frame capturing again
       this._resumeFrameBuffer(function frameResumed(err) {
         // Report any errors
         if (err) {
-          if (callback) callback(err);
-
+          if (callback) {
+            callback(err);
+          }
           return;
-        }
-        else {
+        } else {
           // Call the callback
-          if (callback) callback(null, image);
-            // Emit the picture
-
+          if (callback) {
+            callback(null, image);
+          }
+          // Emit the picture
           setImmediate(function() {
             this.emit('picture', image);
           }.bind(this));
@@ -201,7 +196,9 @@ Camera.prototype._sendCommand = function(apiCommand, args, callback) {
   self.vclib.getCommandPacket(apiCommand, args, function(err, command) {
 
     if (err) {
-      if (callback) callback(err);
+      if (callback) {
+        callback(err);
+      }
       return;
     }
 
@@ -236,8 +233,9 @@ Camera.prototype._sendCommand = function(apiCommand, args, callback) {
       self.uart.removeListener('data', UARTDataParser);
 
       // Throw an error
-      if (callback) callback(new Error("No UART Response..."));
-
+      if (callback) {
+        callback(new Error("No UART Response..."));
+      }
       return;
 
     }, 2000);
@@ -257,7 +255,9 @@ Camera.prototype._waitForImageReadACK = function(callback) {
 
           self.uart.removeListener('data', dataACKParsing);
 
-          if (callback) callback(err);
+          if (callback) {
+            callback(err);
+          }
           return;
         }
       });
@@ -274,13 +274,15 @@ Camera.prototype.disable = function () {
 Camera.prototype.setCompression = function(compression, callback) {
   this._sendCommand("compression", {"ratio":compression}, function(err) {
     if (err) {
-      if (callback) callback(err);
+      if (callback) {
+        callback(err);
+      }
       return;
-    }
-    else {
+    } else {
       this._reset(function(err) {
-
-        if (callback) callback(err);
+        if (callback) {
+          callback(err);
+        }
 
         setImmediate(function() {
           this.emit('compression', compression);
@@ -296,15 +298,15 @@ Camera.prototype.setCompression = function(compression, callback) {
 Camera.prototype.setResolution = function(resolution, callback) {
   this._sendCommand("resolution", {"size":resolution}, function(err) {
     if (err) {
-
-      if (callback) callback(err);
-
+      if (callback) {
+        callback(err);
+      }
       return;
-    }
-    else {
+    } else {
       this._reset(function(err) {
-
-        if (callback) callback(err);
+        if (callback) {
+          callback(err);
+        }
 
         setImmediate(function() {
           this.emit('resolution', resolution);
@@ -320,19 +322,18 @@ Camera.prototype.takePicture = function(callback) {
   // Get data about how many bytes to read
   this._getImageMetaData(function foundMetaData(err, imageLength) {
     if (err) {
-      if (callback) callback(err);
+      if (callback) {
+        callback(err);
+      }
       return;
-    }
-    else {
+    } else {
       // Capture the actual data
       this._captureImageData(imageLength, function imageCaptured(err, image) {
         // Wait for the camera to be ready to continue
         if (err) {
           if (callback) callback(err);
-
           return;
-        }
-        else {
+        } else {
           this._resolveCapture(image, callback);
         }
       }.bind(this));
