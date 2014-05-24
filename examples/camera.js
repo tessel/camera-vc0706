@@ -14,34 +14,22 @@ var notificationLED = tessel.led[3]; // Set up an LED to notify when we're takin
 
 // Wait for the camera module to say it's ready
 camera.on('ready', function() {
-  // (optional) Set the size of images. Options are 'vga' (640x320), 'qvga'(320x240) or 'qqvga' (160x120). Default is 'vga'. Note that the resolution is saved in Flash and will be persistent between power cycles.
-  camera.setResolution('vga', function(err) {
+  notificationLED.high();
+  // Take the picture
+  camera.takePicture(function(err, image) {
     if (err) {
-      return console.log('Error setting resolution', err);
+      console.log('error taking image', err);
+    } else {
+      notificationLED.low();
+      // Name the image
+      var name = 'picture-' + Math.floor(Date.now()*1000) + '.jpg';
+      // Save the image
+      console.log('Picture saving as', name, '...');
+      process.sendfile(name, image);
+      console.log('done.');
+      // Turn the camera off
+      camera.disable();
     }
-    camera.setCompression(100, function(err) {
-      if (err) {
-        return console.log('Error setting compression', err);
-      } else {
-        notificationLED.high();
-        camera.takePicture(function(err, image) {
-          if (err) {
-            console.log('error taking image', err);
-          } else {
-            notificationLED.low();
-            // Name the image
-            var name = 'picture-' + Math.floor(Date.now()*1000) + '.jpg';
-            console.log('picture size', image.length);
-            console.log('uploading as', name);
-            // Save the image
-            process.sendfile(name, image);
-            console.log('done.');
-            // Turn the camera off
-            camera.disable();
-          }
-        });
-      }
-    });
   });
 });
 
