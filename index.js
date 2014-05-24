@@ -25,7 +25,7 @@ function Camera (hardware, callback){
   hardware.digital[3].output().high();
 
   // Attempt to read the version of firmware
-  this.getVersion(function(err, version) {
+  this._getVersion(function(err, version) {
     // If there was a problem
     if (err || !version) {
       // Report an error
