@@ -63,8 +63,6 @@ Camera.prototype._captureImageData = function(imgSize, callback) {
     } else {
       // Begin the transfer
       spi.receive(imgSize, function imageDataRead(err, image){
-
-        // If there was a problem, report it
         if (err) {
           if (callback) {
             callback(err);
