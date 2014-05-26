@@ -38,7 +38,7 @@ camera.on('ready', function() {
             // Save the image
             process.sendfile(name, image);
             console.log('done.');
-            // Turn the camera off
+            // Turn the camera off to end the script
             camera.disable();
           }
         });
@@ -48,5 +48,5 @@ camera.on('ready', function() {
 });
 
 camera.on('error', function(err) {
-  console.log(err);
+  console.error(err);
 });

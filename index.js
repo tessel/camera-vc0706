@@ -59,10 +59,7 @@ Camera.prototype._captureImageData = function(imgSize, callback) {
   this._readFrameBuffer(imgSize, function imageReadCommandSent(err) {
     // If there was a problem, report it
     if (err) {
-      if (callback) {
-        callback(err);
-      }
-      return;
+      return callback(err);
     } else {
       // Begin the transfer
       spi.receive(imgSize, function imageDataRead(err, image){

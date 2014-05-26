@@ -27,12 +27,12 @@ camera.on('ready', function() {
       console.log('Picture saving as', name, '...');
       process.sendfile(name, image);
       console.log('done.');
-      // Turn the camera off
+      // Turn the camera off to end the script
       camera.disable();
     }
   });
 });
 
 camera.on('error', function(err) {
-  console.log(err);
+  console.error(err);
 });

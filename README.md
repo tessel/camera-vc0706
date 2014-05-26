@@ -18,7 +18,7 @@ flag, the picture is saved to that directory.
 *********************************************/
 
 var tessel = require('tessel');
-var camera = require('../').use(tessel.port['A']); // Replace '../' with 'camera-vc0706' in your own code
+var camera = require('camera-vc0706').use(tessel.port['A']);
 
 var notificationLED = tessel.led[3]; // Set up an LED to notify when we're taking a picture
 
@@ -37,14 +37,14 @@ camera.on('ready', function() {
       console.log('Picture saving as', name, '...');
       process.sendfile(name, image);
       console.log('done.');
-      // Turn the camera off
+      // Turn the camera off to end the script
       camera.disable();
     }
   });
 });
 
 camera.on('error', function(err) {
-  console.log(err);
+  console.error(err);
 });
 ```
 
