@@ -31,7 +31,7 @@ camera.on('ready', function(err) {
         console.log(size.width == 640 ? 'ok' : 'not ok', '- jpeg width');
 
         console.log('# done.');
-        camera.close();
+        camera.disable();
       });
     });
   });
