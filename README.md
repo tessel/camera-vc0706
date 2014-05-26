@@ -58,6 +58,7 @@ camera.on('error', function(err) {
 
 ##### * `camera.takePicture(callback(err, picture))` Take a still picture. Returns raw buffer data which you can pipe into a raw http stream or save in memory.
 
+
 ##Events
 
 ##### * `camera.on('compression', callback(xyz))` Emitted when compression is set.
@@ -69,6 +70,13 @@ camera.on('error', function(err) {
 ##### * `camera.on('ready', callback())` Emitted upon first successful communication between the Tessel and the module.
 
 ##### * `camera.on('resolution', callback(resolution))` Emitted when resolution is set.
+
+
+##Further Examples
+See the examples folder for code.
+
+* camera-options: Sets image resolution and compression and then take a picture.
+
 
 ##License
 
