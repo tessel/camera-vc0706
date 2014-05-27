@@ -22,7 +22,7 @@ function Camera (hardware, callback) {
   // Start up UART
   this.uart = hardware.UART({baudrate : 115200});
   // Turn the camera on!
-  hardware.digital[3].output().high();
+  hardware.digital[2].output().high();
 
   // Attempt to read the version of firmware
   this._getVersion(function(err, version) {
