@@ -52,7 +52,7 @@ camera.on('error', function(err) {
 
 ##### * `camera.disable()` Disable UART connection to camera. Closes connection & ends process.
 
-##### * `camera.setCompression(compressionFactor, callback(err))` Determine the amount of compression on each image. Should be a number between 0 and 255. Default is 0x35. Note that the compression is saved in Flash and will be persistent between power cycles.
+##### * `camera.setCompression(compressionFactor, callback(err))` Determine the amount of compression on each image. Should be a number between 0 and 1. Default is 0.2. Note that the compression is saved in Flash and will be persistent between power cycles.
 
 ##### * `camera.setResolution(resolution, callback(err))` Set the size of images. Options are 'vga' (640x320), 'qvga'(320x240) or 'qqvga' (160x120). Default is 'vga'. Note that the resolution is saved in Flash and will be persistent between power cycles.
 
