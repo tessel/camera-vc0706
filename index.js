@@ -11,6 +11,7 @@ var tessel = require('tessel');
 var events = require('events');
 var util = require('util');
 var vclib = require('vclib');
+var Queue = require('sync-queue');
 
 var DEBUG = false;
 
@@ -40,9 +41,36 @@ function Camera (hardware, options, callback) {
         this.emit('error', new Error("Unable to receive responses from module."));
       }.bind(this));
     } else {
+      var queue = new Queue();
+      if (options) {
+        if (options.compression) {
+          queue.place(function() {
+            this.setCompression(options.compression, function(err) {
+              if (err) {
+                this.emit('error', err);
+              } else {
+                queue.next();
+              }
+            }.bind(this));
+          }.bind(this));
+        }
+        if (options.resolution) {
+          queue.place(function() {
+            this.setResolution(options.resolution, function(err) {
+              if (err) {
+                this.emit('error', err);
+              } else {
+                queue.next();
+              }
+            }.bind(this));
+          }.bind(this));
+        }
+      }
       // Report that we are open for business
-      setImmediate(function() {
-        this.emit('ready');
+      queue.place(function(){
+        setImmediate(function() {
+          this.emit('ready');
+        }.bind(this));
       }.bind(this));
     }
 
