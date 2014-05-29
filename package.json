@@ -23,7 +23,8 @@
   ],
   "dependencies": {
     "vclib": "*",
-    "async": "*"
+    "async": "*",
+    "sync-queue": "0.0.1"
   },
   "devDependencies": {
     "jpeg-size": "~0.0.1",
