@@ -17,6 +17,12 @@ var DEBUG = false;
 function Camera (hardware, callback) {
   // Set the port
   this.hardware = hardware;
+  // Make the available resolutions accessible
+  this.resolution = {
+    'vga' : [640,320],
+    'qvga' : [320,240],
+    'qqvga' : [160,120]
+  };
   // Set a new library for sending/receiving data
   this.vclib = new vclib();
   // Start up UART
