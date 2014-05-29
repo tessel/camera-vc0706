@@ -14,9 +14,16 @@ var vclib = require('vclib');
 
 var DEBUG = false;
 
-function Camera (hardware, callback) {
+function Camera (hardware, options, callback) {
   // Set the port
   this.hardware = hardware;
+  // Reassign the callback if options weren't provided
+  if (arguments.length == 2) {
+    if (Object.prototype.toString.call(options) == "[object Function]") {
+      callback = options;
+      options = null;
+    }
+  }
   // Set a new library for sending/receiving data
   this.vclib = new vclib();
   // Start up UART
@@ -336,8 +343,8 @@ Camera.prototype.takePicture = function(callback) {
   }.bind(this));
 };
 
-function use(hardware, callback) {
-  var camera = new Camera(hardware, callback);
+function use(hardware, options, callback) {
+  var camera = new Camera(hardware, options, callback);
   return camera;
 }
 
