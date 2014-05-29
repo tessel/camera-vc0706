@@ -302,7 +302,9 @@ Camera.prototype.disable = function () {
 
 // Set the compression of the images captured. Automatically resets the camera and returns after completion.
 Camera.prototype.setCompression = function(compression, callback) {
-  this._sendCommand("compression", {"ratio":compression}, function(err) {
+  this._sendCommand("compression", {
+    "ratio": Math.floor(compression*255)<0 ? 0 : Math.floor(compression*255)>255 ? 255 : Math.floor(compression*255)
+  }, function(err) {
     if (err) {
       if (callback) {
         callback(err);
