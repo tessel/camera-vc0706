@@ -14,6 +14,7 @@ var vclib = require('vclib');
 var Queue = require('sync-queue');
 
 var DEBUG = false;
+var COMPRESSION_RANGE = 255;
 
 function Camera (hardware, options, callback) {
   // Set the port
@@ -303,7 +304,7 @@ Camera.prototype.disable = function () {
 // Set the compression of the images captured. Automatically resets the camera and returns after completion.
 Camera.prototype.setCompression = function(compression, callback) {
   this._sendCommand("compression", {
-    "ratio": Math.floor(compression*255)<0 ? 0 : Math.floor(compression*255)>255 ? 255 : Math.floor(compression*255)
+    "ratio": Math.floor(compression*COMPRESSION_RANGE)<0 ? 0 : Math.floor(compression*COMPRESSION_RANGE)>COMPRESSION_RANGE ? COMPRESSION_RANGE : Math.floor(compression*COMPRESSION_RANGE)
   }, function(err) {
     if (err) {
       if (callback) {
@@ -380,3 +381,4 @@ function use(hardware, options, callback) {
 
 module.exports.Camera = Camera;
 module.exports.use = use;
+module.exports.COMPRESSION_RANGE = COMPRESSION_RANGE;
