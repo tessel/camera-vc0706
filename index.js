@@ -11,12 +11,20 @@ var tessel = require('tessel');
 var events = require('events');
 var util = require('util');
 var vclib = require('vclib');
+var Queue = require('sync-queue');
 
 var DEBUG = false;
 
-function Camera (hardware, callback) {
+function Camera (hardware, options, callback) {
   // Set the port
   this.hardware = hardware;
+  // Reassign the callback if options weren't provided
+  if (arguments.length == 2) {
+    if (Object.prototype.toString.call(options) == "[object Function]") {
+      callback = options;
+      options = null;
+    }
+  }
   // Set a new library for sending/receiving data
   this.vclib = new vclib();
   // Start up UART
@@ -33,9 +41,36 @@ function Camera (hardware, callback) {
         this.emit('error', new Error("Unable to receive responses from module."));
       }.bind(this));
     } else {
+      var queue = new Queue();
+      if (options) {
+        if (options.compression) {
+          queue.place(function() {
+            this.setCompression(options.compression, function(err) {
+              if (err) {
+                this.emit('error', err);
+              } else {
+                queue.next();
+              }
+            }.bind(this));
+          }.bind(this));
+        }
+        if (options.resolution) {
+          queue.place(function() {
+            this.setResolution(options.resolution, function(err) {
+              if (err) {
+                this.emit('error', err);
+              } else {
+                queue.next();
+              }
+            }.bind(this));
+          }.bind(this));
+        }
+      }
       // Report that we are open for business
-      setImmediate(function() {
-        this.emit('ready');
+      queue.place(function(){
+        setImmediate(function() {
+          this.emit('ready');
+        }.bind(this));
       }.bind(this));
     }
 
@@ -336,8 +371,8 @@ Camera.prototype.takePicture = function(callback) {
   }.bind(this));
 };
 
-function use(hardware, callback) {
-  var camera = new Camera(hardware, callback);
+function use(hardware, options, callback) {
+  var camera = new Camera(hardware, options, callback);
   return camera;
 }
 

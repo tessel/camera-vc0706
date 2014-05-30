@@ -71,11 +71,22 @@ camera.on('error', function(err) {
 
 ##### * `camera.on('resolution', callback(resolution))` Emitted when resolution is set.
 
+##Configuration
+In addition to the `camera.setCompression()` and `camera.setResolution()` methods, the camera can be configured at creation with an optional configuration object paremeter in the `.use()` method.
+```js
+var tessel = require('tessel');
+var camera = require('camera-vc0706').use(
+  tessel.port['A'], {
+      compression: 255, 
+      resolution: 'vga'
+  }
+);
+```
 
 ##Further Examples
 See the examples folder for code.
 
-* camera-options: Sets image resolution and compression and then take a picture.
+* camera-options: Set the image resolution and compression after setup and then take a picture.
 
 
 ##License
