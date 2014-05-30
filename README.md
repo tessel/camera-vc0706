@@ -77,7 +77,7 @@ In addition to the `camera.setCompression()` and `camera.setResolution()` method
 var tessel = require('tessel');
 var camera = require('camera-vc0706').use(
   tessel.port['A'], {
-      compression: 255, 
+      compression: 0.2, 
       resolution: 'vga'
   }
 );
