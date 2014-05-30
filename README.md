@@ -72,7 +72,7 @@ camera.on('error', function(err) {
 ##### * `camera.on('resolution', callback(resolution))` Emitted when resolution is set.
 
 ##Configuration
-In addition to the `camera.setCompression()` and `camera.setResolution()` methods, the camera can be configured at creation in the `.use()` method.
+In addition to the `camera.setCompression()` and `camera.setResolution()` methods, the camera can be configured at creation with an optional configuration object paremeter in the `.use()` method.
 ```js
 var tessel = require('tessel');
 var camera = require('camera-vc0706').use(
