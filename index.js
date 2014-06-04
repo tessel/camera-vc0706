@@ -71,6 +71,7 @@ function Camera (hardware, options, callback) {
       queue.place(function(){
         setImmediate(function() {
           this.emit('ready');
+          sharedPictureQueue.sharedQueue().pop();
         }.bind(this));
       }.bind(this));
     }
@@ -350,27 +351,81 @@ Camera.prototype.setResolution = function(resolution, callback) {
   }.bind(this));
 };
 
+// Singleton picture queue used to store calls to Camera.takePicture in case its called before 'ready'
+var sharedPictureQueue = (function () {
+  var sharedInstance;
+
+  function init () {
+    var queue = [];
+    var cameraReady = false;
+    var push = function (fn) {
+      if (cameraReady) {
+        fn();
+      } else {
+        queue.push(fn);
+      }
+    };
+
+    var pop = function () {
+      if (!cameraReady) {
+        cameraReady = true;
+      };
+      if (queue.length == 0) {
+        return;
+      }
+      var fn = queue.shift();
+      fn();
+    };
+
+    return {
+      push: push,
+      pop: pop
+    }
+  };
+
+  return {
+    sharedQueue: function () {
+      if (sharedInstance) {
+        return sharedInstance;
+      } else {
+        sharedInstance = init();
+        return sharedInstance;
+      }
+    }
+  }
+})();
+
+function decorateCallback (callback, decorator) {
+  return function () {
+    callback.apply(callback, arguments);
+    decorator();
+  }
+}
+
 // Primary method for capturing an image. Actually transfers the image over SPI Slave as opposed to UART.
 Camera.prototype.takePicture = function(callback) {
-  // Get data about how many bytes to read
-  this._getImageMetaData(function foundMetaData(err, imageLength) {
-    if (err) {
-      if (callback) {
-        callback(err);
-      }
-      return;
-    } else {
-      // Capture the actual data
-      this._captureImageData(imageLength, function imageCaptured(err, image) {
-        // Wait for the camera to be ready to continue
-        if (err) {
-          if (callback) callback(err);
-          return;
-        } else {
-          this._resolveCapture(image, callback);
+  // Pictures are placed in a queue so that users can call takePicture before ready event
+  sharedPictureQueue.sharedQueue().push(function () {
+    // Get data about how many bytes to read
+    this._getImageMetaData(function foundMetaData(err, imageLength) {
+      if (err) {
+        if (callback) {
+          callback(err);
         }
-      }.bind(this));
-    }
+        return;
+      } else {
+        // Capture the actual data
+        this._captureImageData(imageLength, function imageCaptured(err, image) {
+          // Wait for the camera to be ready to continue
+          if (err) {
+            if (callback) callback(err);
+            return;
+          } else {
+            this._resolveCapture(image, decorateCallback(callback, sharedPictureQueue.sharedQueue().pop));
+          }
+        }.bind(this));
+      }
+    }.bind(this));
   }.bind(this));
 };
 
