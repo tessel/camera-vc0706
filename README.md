@@ -47,6 +47,10 @@ camera.on('error', function(err) {
   console.error(err);
 });
 ```
+##Properties
+
+##### * `camera.resolutions` An object which maps resolution labels to their dimensions. The string labels can be used to configure the camera's resolution.
+
 
 ##Methods
 

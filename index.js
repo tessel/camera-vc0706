@@ -382,3 +382,4 @@ function use(hardware, options, callback) {
 module.exports.Camera = Camera;
 module.exports.use = use;
 module.exports.COMPRESSION_RANGE = COMPRESSION_RANGE;
+module.exports.resolutions = vclib.resolutions;
