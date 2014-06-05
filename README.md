@@ -51,7 +51,7 @@ camera.on('error', function(err) {
 &#x20;<a href="#api-camera-resolutions-An-object-which-maps-resolution-labels-to-their-dimensions-The-string-labels-can-be-used-to-configure-the-camera-s-resolution" name="api-camera-resolutions-An-object-which-maps-resolution-labels-to-their-dimensions-The-string-labels-can-be-used-to-configure-the-camera-s-resolution">#</a> camera<b>.resolutions</b>() An object which maps resolution labels to their dimensions. The string labels can be used to configure the camera's resolution.  
 
 
-##Methods
+###Methods
 &#x20;<a href="#api-camera-disable-Disable-UART-connection-to-camera-Closes-connection-ends-process" name="api-camera-disable-Disable-UART-connection-to-camera-Closes-connection-ends-process">#</a> camera<b>.disable</b>() Disable UART connection to camera. Closes connection & ends process.  
 
 &#x20;<a href="#api-camera-setCompression-compressionFactor-callback-err-Determine-the-amount-of-compression-on-each-image-Should-be-a-number-between-0-and-1-Default-is-0-2-Note-that-the-compression-is-saved-in-Flash-and-will-be-persistent-between-power-cycles" name="api-camera-setCompression-compressionFactor-callback-err-Determine-the-amount-of-compression-on-each-image-Should-be-a-number-between-0-and-1-Default-is-0-2-Note-that-the-compression-is-saved-in-Flash-and-will-be-persistent-between-power-cycles">#</a> camera<b>.setCompression</b>( compressionFactor, callback(err) ) Determine the amount of compression on each image. Should be a number between 0 and 1. Default is 0.2. Note that the compression is saved in Flash and will be persistent between power cycles.  
