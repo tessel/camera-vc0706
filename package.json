@@ -23,7 +23,6 @@
   ],
   "dependencies": {
     "vclib": "*",
-    "async": "*",
     "sync-queue": "0.0.1"
   },
   "devDependencies": {
