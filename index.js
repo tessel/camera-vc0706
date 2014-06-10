@@ -309,6 +309,7 @@ function decorateCallback (callback, decorator) {
 Camera.prototype.disable = function () {
   queue.place(function () {
     this.uart.disable();
+    queue.next();
   }.bind(this));
 };
 
