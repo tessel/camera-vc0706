@@ -11,12 +11,9 @@ var tessel = require('tessel');
 var events = require('events');
 var util = require('util');
 var vclib = require('vclib');
-var Queue = require('sync-queue');
 
 var DEBUG = false;
 var COMPRESSION_RANGE = 255;
-
-var readyQueue = new async_queue(true);
 
 function Camera (hardware, options, callback) {
   // Set the port
@@ -44,37 +41,26 @@ function Camera (hardware, options, callback) {
         this.emit('error', new Error("Unable to receive responses from module."));
       }.bind(this));
     } else {
-      var queue = new Queue();
       if (options) {
         if (options.compression) {
-          queue.place(function() {
-            this.setCompression(options.compression, function(err) {
-              if (err) {
-                this.emit('error', err);
-              } else {
-                queue.next();
-              }
-            }.bind(this));
+          this.setCompression(options.compression, function(err) {
+            if (err) {
+              this.emit('error', err);
+            }
           }.bind(this));
         }
         if (options.resolution) {
-          queue.place(function() {
-            this.setResolution(options.resolution, function(err) {
-              if (err) {
-                this.emit('error', err);
-              } else {
-                queue.next();
-              }
-            }.bind(this));
+          this.setResolution(options.resolution, function(err) {
+            if (err) {
+              this.emit('error', err);
+            }
           }.bind(this));
         }
       }
       // Report that we are open for business
-      queue.place(function(){
-        setImmediate(function() {
-          this.emit('ready');
-          readyQueue.ready(); // Triggers Queued Events
-        }.bind(this));
+      setImmediate(function() {
+        this.emit('ready');
+        readyQueue.ready();
       }.bind(this));
     }
 
@@ -299,57 +285,11 @@ Camera.prototype._waitForImageReadACK = function(callback) {
   });
 };
 
-var async_queue = function (queueReady) {
-  var queue = [];
-  var queueReady = queueReady | false;
-  var self = this;
-
-  this.push = function (fn, callback) {
-    queue.push({fn:fn, callback:callback});
-
-    if (queueReady) {
-      pop();
-    };
-  };
-
-  // called on 'ready' to fire events stored before camera is ready
-  this.ready = function () {
-    unlockQueue();
-    pop();
-  }
-
-  var pop = function () {
-    if (queue.length == 0) {
-      return;
-    }
-    lockQueue();
-    var obj = queue.shift();
-    var fn = obj.fn;
-    var callback = obj.callback;
-    fn(decorateCallback(callback, self.ready)); // Call Ready
-  };
-
-  var unlockQueue = function () {
-    queueReady = true;
-  }
-
-  var lockQueue = function () {
-    queueReady = false;
-  }
-}
-
-function decorateCallback (callback, decorator) {
-  return function () {
-    callback.apply(callback, arguments);
-    decorator();
-  }
-}
-
 // Close camera connection
 Camera.prototype.disable = function () {
   readyQueue.push(function () {
     this.uart.disable();
-  }.bind(this), function(){});
+  }.bind(this));
 };
 
 // Set the compression of the images captured. Automatically resets the camera and returns after completion.
