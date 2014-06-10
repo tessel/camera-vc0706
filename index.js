@@ -347,7 +347,7 @@ function decorateCallback (callback, decorator) {
 
 // Close camera connection
 Camera.prototype.disable = function () {
-  readyQueue.push(function (callback) {
+  readyQueue.push(function () {
     this.uart.disable();
   }.bind(this), function(){});
 };
