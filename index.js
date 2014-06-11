@@ -11,7 +11,7 @@ var tessel = require('tessel');
 var events = require('events');
 var util = require('util');
 var vclib = require('vclib');
-var Queue = require('sync-queue');
+var Queue = require('sink_q');
 
 var DEBUG = false;
 var COMPRESSION_RANGE = 255;
@@ -19,6 +19,7 @@ var COMPRESSION_RANGE = 255;
 function Camera (hardware, options, callback) {
   // Set the port
   this.hardware = hardware;
+  this.queue = new Queue();
   // Reassign the callback if options weren't provided
   if (arguments.length == 2) {
     if (Object.prototype.toString.call(options) == "[object Function]") {
@@ -42,37 +43,26 @@ function Camera (hardware, options, callback) {
         this.emit('error', new Error("Unable to receive responses from module."));
       }.bind(this));
     } else {
-      var queue = new Queue();
       if (options) {
         if (options.compression) {
-          queue.place(function() {
-            this.setCompression(options.compression, function(err) {
-              if (err) {
-                this.emit('error', err);
-              } else {
-                queue.next();
-              }
-            }.bind(this));
+          this.setCompression(options.compression, function(err) {
+            if (err) {
+              this.emit('error', err);
+            }
           }.bind(this));
         }
         if (options.resolution) {
-          queue.place(function() {
-            this.setResolution(options.resolution, function(err) {
-              if (err) {
-                this.emit('error', err);
-              } else {
-                queue.next();
-              }
-            }.bind(this));
+          this.setResolution(options.resolution, function(err) {
+            if (err) {
+              this.emit('error', err);
+            }
           }.bind(this));
         }
       }
       // Report that we are open for business
-      queue.place(function(){
-        setImmediate(function() {
-          this.emit('ready');
-          sharedPictureQueue.sharedQueue().pop();
-        }.bind(this));
+      setImmediate(function() {
+        this.emit('ready');
+        this.queue.ready();
       }.bind(this));
     }
 
@@ -299,113 +289,68 @@ Camera.prototype._waitForImageReadACK = function(callback) {
 
 // Close camera connection
 Camera.prototype.disable = function () {
-  this.uart.disable();
+  this.queue.push(function () {
+    this.uart.disable();
+  }.bind(this));
 };
 
 // Set the compression of the images captured. Automatically resets the camera and returns after completion.
 Camera.prototype.setCompression = function(compression, callback) {
-  this._sendCommand("compression", {
-    "ratio": Math.floor(compression*COMPRESSION_RANGE)<0 ? 0 : Math.floor(compression*COMPRESSION_RANGE)>COMPRESSION_RANGE ? COMPRESSION_RANGE : Math.floor(compression*COMPRESSION_RANGE)
-  }, function(err) {
-    if (err) {
-      if (callback) {
-        callback(err);
-      }
-      return;
-    } else {
-      this._reset(function(err) {
+  this.queue.push(function (callback) {
+    this._sendCommand("compression", {
+      "ratio": Math.floor(compression*COMPRESSION_RANGE)<0 ? 0 : Math.floor(compression*COMPRESSION_RANGE)>COMPRESSION_RANGE ? COMPRESSION_RANGE : Math.floor(compression*COMPRESSION_RANGE)
+    }, function(err) {
+      if (err) {
         if (callback) {
           callback(err);
         }
-
-        setImmediate(function() {
-          this.emit('compression', compression);
-        }.bind(this));
-
         return;
-      }.bind(this));
-    }
-  }.bind(this));
+      } else {
+        this._reset(function(err) {
+          if (callback) {
+            callback(err);
+          }
+
+          setImmediate(function() {
+            this.emit('compression', compression);
+          }.bind(this));
+
+          return;
+        }.bind(this));
+      }
+    }.bind(this));
+  }.bind(this), callback);
 };
 
 // Set the resolution of the images captured. Automatically resets the camera and returns after completion.
 Camera.prototype.setResolution = function(resolution, callback) {
-  this._sendCommand("resolution", {"size":resolution}, function(err) {
-    if (err) {
-      if (callback) {
-        callback(err);
-      }
-      return;
-    } else {
-      this._reset(function(err) {
+  this.queue.push(function (callback) {
+    this._sendCommand("resolution", {"size":resolution}, function(err) {
+      if (err) {
         if (callback) {
           callback(err);
         }
-
-        setImmediate(function() {
-          this.emit('resolution', resolution);
-        }.bind(this));
-
-      }.bind(this));
-    }
-  }.bind(this));
-};
-
-// Singleton picture queue used to store calls to Camera.takePicture in case its called before 'ready'
-var sharedPictureQueue = (function () {
-  var sharedInstance;
-
-  function init () {
-    var queue = [];
-    var cameraReady = false;
-    var push = function (fn) {
-      if (cameraReady) {
-        fn();
-      } else {
-        queue.push(fn);
-      }
-    };
-
-    var pop = function () {
-      if (!cameraReady) {
-        cameraReady = true;
-      };
-      if (queue.length == 0) {
         return;
-      }
-      var fn = queue.shift();
-      fn();
-    };
-
-    return {
-      push: push,
-      pop: pop
-    }
-  };
-
-  return {
-    sharedQueue: function () {
-      if (sharedInstance) {
-        return sharedInstance;
       } else {
-        sharedInstance = init();
-        return sharedInstance;
-      }
-    }
-  }
-})();
+        this._reset(function(err) {
+          if (callback) {
+            callback(err);
+          }
 
-function decorateCallback (callback, decorator) {
-  return function () {
-    callback.apply(callback, arguments);
-    decorator();
-  }
-}
+          setImmediate(function() {
+            this.emit('resolution', resolution);
+          }.bind(this));
+
+        }.bind(this));
+      }
+    }.bind(this));
+  }.bind(this), callback);
+};
 
 // Primary method for capturing an image. Actually transfers the image over SPI Slave as opposed to UART.
 Camera.prototype.takePicture = function(callback) {
   // Pictures are placed in a queue so that users can call takePicture before ready event
-  sharedPictureQueue.sharedQueue().push(function () {
+  this.queue.push(function (callback) {
     // Get data about how many bytes to read
     this._getImageMetaData(function foundMetaData(err, imageLength) {
       if (err) {
@@ -421,12 +366,12 @@ Camera.prototype.takePicture = function(callback) {
             if (callback) callback(err);
             return;
           } else {
-            this._resolveCapture(image, decorateCallback(callback, sharedPictureQueue.sharedQueue().pop));
+            this._resolveCapture(image, callback);
           }
         }.bind(this));
       }
     }.bind(this));
-  }.bind(this));
+  }.bind(this), callback);
 };
 
 function use(hardware, options, callback) {
