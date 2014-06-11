@@ -10,7 +10,7 @@
     "type": "git",
     "url": "git@github.com:tessel/camera-vc0706.git"
   },
-  "author": "Jon McKay <jon@technical.io>",
+  "author": "Technical Machine <team@technical.io>",
   "license": "MIT",
   "readmeFilename": "README.md",
   "directories": {
@@ -19,11 +19,13 @@
   "keywords": [
     "tessel",
     "camera",
-    "technical machine"
+    "technical machine",
+    "vc0706",
+    "image"
   ],
   "dependencies": {
     "vclib": "*",
-    "sink_q": "0.0.2"
+    "sink_q": "*"
   },
   "devDependencies": {
     "jpeg-size": "~0.0.1",
