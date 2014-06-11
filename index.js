@@ -15,6 +15,7 @@ var Queue = require('sink_q');
 
 var DEBUG = false;
 var COMPRESSION_RANGE = 255;
+var queue = new Queue();
 
 var queue = new Queue();
 
@@ -293,7 +294,7 @@ Camera.prototype.disable = function () {
   queue.push(function () {
     this.uart.disable();
   }.bind(this));
-};
+}
 
 // Set the compression of the images captured. Automatically resets the camera and returns after completion.
 Camera.prototype.setCompression = function(compression, callback) {
@@ -314,13 +315,14 @@ Camera.prototype.setCompression = function(compression, callback) {
 
           setImmediate(function() {
             this.emit('compression', compression);
+            queue.next();
           }.bind(this));
 
           return;
         }.bind(this));
       }
     }.bind(this));
-  }.bind(this), callback);
+  }.bind(this));
 };
 
 // Set the resolution of the images captured. Automatically resets the camera and returns after completion.
@@ -340,12 +342,13 @@ Camera.prototype.setResolution = function(resolution, callback) {
 
           setImmediate(function() {
             this.emit('resolution', resolution);
+            queue.next();
           }.bind(this));
 
         }.bind(this));
       }
     }.bind(this));
-  }.bind(this), callback);
+  }.bind(this));
 };
 
 // Primary method for capturing an image. Actually transfers the image over SPI Slave as opposed to UART.
@@ -367,12 +370,12 @@ Camera.prototype.takePicture = function(callback) {
             if (callback) callback(err);
             return;
           } else {
-            this._resolveCapture(image, callback);
+            this._resolveCapture(image, decorateCallback(callback, queue.next));
           }
         }.bind(this));
       }
     }.bind(this));
-  }.bind(this), callback);
+  }.bind(this));
 };
 
 function use(hardware, options, callback) {
