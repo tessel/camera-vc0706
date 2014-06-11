@@ -16,11 +16,10 @@ var Queue = require('sink_q');
 var DEBUG = false;
 var COMPRESSION_RANGE = 255;
 
-var queue = new Queue();
-
 function Camera (hardware, options, callback) {
   // Set the port
   this.hardware = hardware;
+  this.queue = new Queue();
   // Reassign the callback if options weren't provided
   if (arguments.length == 2) {
     if (Object.prototype.toString.call(options) == "[object Function]") {
@@ -63,7 +62,7 @@ function Camera (hardware, options, callback) {
       // Report that we are open for business
       setImmediate(function() {
         this.emit('ready');
-        queue.ready();
+        this.queue.ready();
       }.bind(this));
     }
 
@@ -290,14 +289,14 @@ Camera.prototype._waitForImageReadACK = function(callback) {
 
 // Close camera connection
 Camera.prototype.disable = function () {
-  queue.push(function () {
+  this.queue.push(function () {
     this.uart.disable();
   }.bind(this));
 };
 
 // Set the compression of the images captured. Automatically resets the camera and returns after completion.
 Camera.prototype.setCompression = function(compression, callback) {
-  queue.push(function (callback) {
+  this.queue.push(function (callback) {
     this._sendCommand("compression", {
       "ratio": Math.floor(compression*COMPRESSION_RANGE)<0 ? 0 : Math.floor(compression*COMPRESSION_RANGE)>COMPRESSION_RANGE ? COMPRESSION_RANGE : Math.floor(compression*COMPRESSION_RANGE)
     }, function(err) {
@@ -325,7 +324,7 @@ Camera.prototype.setCompression = function(compression, callback) {
 
 // Set the resolution of the images captured. Automatically resets the camera and returns after completion.
 Camera.prototype.setResolution = function(resolution, callback) {
-  queue.push(function (callback) {
+  this.queue.push(function (callback) {
     this._sendCommand("resolution", {"size":resolution}, function(err) {
       if (err) {
         if (callback) {
@@ -351,7 +350,7 @@ Camera.prototype.setResolution = function(resolution, callback) {
 // Primary method for capturing an image. Actually transfers the image over SPI Slave as opposed to UART.
 Camera.prototype.takePicture = function(callback) {
   // Pictures are placed in a queue so that users can call takePicture before ready event
-  queue.push(function (callback) {
+  this.queue.push(function (callback) {
     // Get data about how many bytes to read
     this._getImageMetaData(function foundMetaData(err, imageLength) {
       if (err) {
