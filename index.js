@@ -370,7 +370,7 @@ Camera.prototype.setResolution = function(resolution, callback) {
 };
 
 Camera.prototype.takePicture2 = function (callback) {
-  // this.queue.push(function (callback) {
+  this.queue.push(function (callback) { // Make the next shit the callback? // Why are u deadlocked?
     this.setCompression (0.0, function () {
       this._resumeFrameBuffer (function () {
         this._stopFrameBuffer (function () {
@@ -389,7 +389,7 @@ Camera.prototype.takePicture2 = function (callback) {
         }.bind(this))
       }.bind(this))
     }.bind(this))
-  // }.bind(this), callback)
+  }.bind(this), callback, true)
 };
 
 
