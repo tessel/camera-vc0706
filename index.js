@@ -78,7 +78,6 @@ function Camera (hardware, options, callback) {
 util.inherits(Camera, events.EventEmitter);
 
 Camera.prototype._captureImageData = function(imgSize, callback) {
-
    // Intialize SPI
   var spi = this.hardware.SPI({role:'slave'});
 
@@ -114,31 +113,31 @@ Camera.prototype._getFrameBufferLength = function(callback) {
 
 Camera.prototype._getImageMetaData = function(callback) {
   // Stop the frame buffer (capture the image...)
-  this._stopFrameBuffer(function imageFrameStopped(err) {
+    this._stopFrameBuffer(function imageFrameStopped(err) {
 
-    if (err) {
-      if (callback) {
-        callback(err);
-      }
-      return;
-    } else {
-      // Get the size of the image to capture
-      this._getFrameBufferLength(function imageLengthRead(err, imgSize) {
-        // If there was a problem, report it
-        if (err) {
-          if (callback) {
-            callback(err);
-          }
-          return;
-        } else {
-          if (callback) {
-            callback(null, imgSize);
-          }
-          return;
+      if (err) {
+        if (callback) {
+          callback(err);
         }
-      }.bind(this));
-    }
-  }.bind(this));
+        return;
+      } else {
+        // Get the size of the image to capture
+        this._getFrameBufferLength(function imageLengthRead(err, imgSize) {
+          // If there was a problem, report it
+          if (err) {
+            if (callback) {
+              callback(err);
+            }
+            return;
+          } else {
+            if (callback) {
+              callback(null, imgSize);
+            }
+            return;
+          }
+        }.bind(this));
+      }
+    }.bind(this));
 };
 
 // Get the version of firmware on the camera. Typically only used for debugging.
@@ -315,7 +314,30 @@ Camera.prototype.setCompression = function(compression, callback) {
             this.emit('compression', compression);
           }.bind(this));
 
-          return;
+        }.bind(this));
+      }
+    }.bind(this));
+  }.bind(this), callback);
+};
+
+Camera.prototype.getCompression = function(callback) {
+  this.queue.push(function (callback) {
+    this._sendCommand("getCompression", {}, function(err) {
+      if (err) {
+        if (callback) {
+          callback(err);
+        }
+        return;
+      } else {
+        this._reset(function(err) {
+          if (callback) {
+            callback(err);
+          }
+
+          setImmediate(function() {
+            this.emit('getCompression');
+          }.bind(this));
+
         }.bind(this));
       }
     }.bind(this));
@@ -346,6 +368,30 @@ Camera.prototype.setResolution = function(resolution, callback) {
     }.bind(this));
   }.bind(this), callback);
 };
+
+Camera.prototype.takePicture2 = function (callback) {
+  // this.queue.push(function (callback) {
+    this.setCompression (0.0, function () {
+      this._resumeFrameBuffer (function () {
+        this._stopFrameBuffer (function () {
+          this._getFrameBufferLength(function imageLengthRead(err, imgSize) {
+            // If there was a problem, report it
+            this._captureImageData(imgSize, function imageCaptured(err, image) {
+              // Wait for the camera to be ready to continue
+              if (err) {
+                if (callback) callback(err);
+                return;
+              } else {
+                this._resolveCapture(image, callback);
+              }
+            }.bind(this))
+          }.bind(this))
+        }.bind(this))
+      }.bind(this))
+    }.bind(this))
+  // }.bind(this), callback)
+};
+
 
 // Primary method for capturing an image. Actually transfers the image over SPI Slave as opposed to UART.
 Camera.prototype.takePicture = function(callback) {
