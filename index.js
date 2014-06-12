@@ -314,6 +314,7 @@ Camera.prototype.setCompression = function(compression, callback) {
             this.emit('compression', compression);
           }.bind(this));
 
+          return;
         }.bind(this));
       }
     }.bind(this));
@@ -368,30 +369,6 @@ Camera.prototype.setResolution = function(resolution, callback) {
     }.bind(this));
   }.bind(this), callback);
 };
-
-Camera.prototype.takePicture2 = function (callback) {
-  this.queue.push(function (callback) { // Make the next shit the callback? // Why are u deadlocked?
-    this.setCompression (0.0, function () {
-      this._resumeFrameBuffer (function () {
-        this._stopFrameBuffer (function () {
-          this._getFrameBufferLength(function imageLengthRead(err, imgSize) {
-            // If there was a problem, report it
-            this._captureImageData(imgSize, function imageCaptured(err, image) {
-              // Wait for the camera to be ready to continue
-              if (err) {
-                if (callback) callback(err);
-                return;
-              } else {
-                this._resolveCapture(image, callback);
-              }
-            }.bind(this))
-          }.bind(this))
-        }.bind(this))
-      }.bind(this))
-    }.bind(this))
-  }.bind(this), callback, true)
-};
-
 
 // Primary method for capturing an image. Actually transfers the image over SPI Slave as opposed to UART.
 Camera.prototype.takePicture = function(callback) {
