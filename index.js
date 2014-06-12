@@ -322,6 +322,37 @@ Camera.prototype.setCompression = function(compression, callback) {
   }.bind(this), callback);
 };
 
+// Gets the compression ratio of the images captured. Returns value from [0, 1].
+Camera.prototype.getCompression = function(callback) {
+  this.queue.push(function (callback) {
+    this._sendCommand("getCompression", function(err, compressionRatioRaw) {
+      if (err) {
+        if (callback) {
+          callback(err);
+        }
+        return;
+      } else {
+        this._reset(function(err) {
+          var compressionRatio = (compressionRatioRaw * 1/255); // Maps from [0,255] -> [0,1]
+          if (err) {
+            if (callback) {
+              callback(err);
+            }
+          } else {
+            if (callback) {
+              callback(null, compressionRatio);
+            }
+          }
+          setImmediate(function() {
+            this.emit('getCompression', compressionRatio);
+          }.bind(this));
+
+        }.bind(this));
+      }
+    }.bind(this));
+  }.bind(this), callback);
+};
+
 // Set the resolution of the images captured. Automatically resets the camera and returns after completion.
 Camera.prototype.setResolution = function(resolution, callback) {
   this.queue.push(function (callback) {
@@ -339,6 +370,38 @@ Camera.prototype.setResolution = function(resolution, callback) {
 
           setImmediate(function() {
             this.emit('resolution', resolution);
+          }.bind(this));
+
+        }.bind(this));
+      }
+    }.bind(this));
+  }.bind(this), callback);
+};
+
+// Gets the resolution of the images captured.
+Camera.prototype.getResolution = function(callback) {
+  this.queue.push(function (callback) {
+    this._sendCommand("getResolution", function(err, resolutionRaw) {
+      if (err) {
+        if (callback) {
+          callback(err);
+        }
+        return;
+      } else {
+        this._reset(function(err) {
+          var resolution = (resolutionRaw == 0x00) ? 'vga' : (resolutionRaw == 0x11) ? 'qvga' : 'qqvga';
+          if (err) {
+            if (callback) {
+              callback(err);
+            }
+          } else {
+            if (callback) {
+              callback(null, resolution);
+            }
+          }
+
+          setImmediate(function() {
+            this.emit('getResolution', resolution);
           }.bind(this));
 
         }.bind(this));
