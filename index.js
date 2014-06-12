@@ -78,7 +78,6 @@ function Camera (hardware, options, callback) {
 util.inherits(Camera, events.EventEmitter);
 
 Camera.prototype._captureImageData = function(imgSize, callback) {
-
    // Intialize SPI
   var spi = this.hardware.SPI({role:'slave'});
 
@@ -114,31 +113,31 @@ Camera.prototype._getFrameBufferLength = function(callback) {
 
 Camera.prototype._getImageMetaData = function(callback) {
   // Stop the frame buffer (capture the image...)
-  this._stopFrameBuffer(function imageFrameStopped(err) {
+    this._stopFrameBuffer(function imageFrameStopped(err) {
 
-    if (err) {
-      if (callback) {
-        callback(err);
-      }
-      return;
-    } else {
-      // Get the size of the image to capture
-      this._getFrameBufferLength(function imageLengthRead(err, imgSize) {
-        // If there was a problem, report it
-        if (err) {
-          if (callback) {
-            callback(err);
-          }
-          return;
-        } else {
-          if (callback) {
-            callback(null, imgSize);
-          }
-          return;
+      if (err) {
+        if (callback) {
+          callback(err);
         }
-      }.bind(this));
-    }
-  }.bind(this));
+        return;
+      } else {
+        // Get the size of the image to capture
+        this._getFrameBufferLength(function imageLengthRead(err, imgSize) {
+          // If there was a problem, report it
+          if (err) {
+            if (callback) {
+              callback(err);
+            }
+            return;
+          } else {
+            if (callback) {
+              callback(null, imgSize);
+            }
+            return;
+          }
+        }.bind(this));
+      }
+    }.bind(this));
 };
 
 // Get the version of firmware on the camera. Typically only used for debugging.
@@ -316,6 +315,30 @@ Camera.prototype.setCompression = function(compression, callback) {
           }.bind(this));
 
           return;
+        }.bind(this));
+      }
+    }.bind(this));
+  }.bind(this), callback);
+};
+
+Camera.prototype.getCompression = function(callback) {
+  this.queue.push(function (callback) {
+    this._sendCommand("getCompression", {}, function(err) {
+      if (err) {
+        if (callback) {
+          callback(err);
+        }
+        return;
+      } else {
+        this._reset(function(err) {
+          if (callback) {
+            callback(err);
+          }
+
+          setImmediate(function() {
+            this.emit('getCompression');
+          }.bind(this));
+
         }.bind(this));
       }
     }.bind(this));
