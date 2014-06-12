@@ -333,7 +333,7 @@ Camera.prototype.getCompression = function(callback) {
         return;
       } else {
         this._reset(function(err) {
-          var compressionRatio = (compressionRatioRaw * 1/255); // Maps from [0,255] -> [0,1]
+          var compressionRatio = (compressionRatioRaw * 1/COMPRESSION_RANGE); // Maps from [0,255] -> [0,1]
           if (err) {
             if (callback) {
               callback(err);
