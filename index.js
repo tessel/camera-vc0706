@@ -16,6 +16,16 @@ var Queue = require('sink_q');
 var DEBUG = false;
 var COMPRESSION_RANGE = 255;
 
+// Helper function which handles error events
+// Because this function returns, there is no need to do if (err) else <function>
+function handleError (err, callback) {
+  if (callback) {
+    callback(err);
+  }
+  this.emit('error', err);
+  return;
+}
+
 function Camera (hardware, options, callback) {
   // Set the port
   this.hardware = hardware;
@@ -301,14 +311,16 @@ Camera.prototype.setCompression = function(compression, callback) {
       "ratio": Math.floor(compression*COMPRESSION_RANGE)<0 ? 0 : Math.floor(compression*COMPRESSION_RANGE)>COMPRESSION_RANGE ? COMPRESSION_RANGE : Math.floor(compression*COMPRESSION_RANGE)
     }, function(err) {
       if (err) {
-        if (callback) {
-          callback(err);
-        }
-        return;
+        handleError.call(this, err, callback);
       } else {
         this._reset(function(err) {
+
+          if (err) {
+            handleError.call(this, err, callback);
+          }
+
           if (callback) {
-            callback(err);
+            callback();
           }
 
           setImmediate(function() {
@@ -322,23 +334,80 @@ Camera.prototype.setCompression = function(compression, callback) {
   }.bind(this), callback);
 };
 
+// Gets the compression ratio of the images captured. Returns value from [0, 1].
+Camera.prototype.getCompression = function(callback) {
+  this.queue.push(function (callback) {
+    this._sendCommand("getCompression", function(err, compressionRatioRaw) {
+      if (err) {
+        handleError.call(this, err, callback);
+      } else {
+        this._reset(function(err) {
+          var compressionRatio = (compressionRatioRaw * 1/COMPRESSION_RANGE); // Maps from [0,255] -> [0,1]
+
+          if (err) {
+            handleError.call(this, err, callback);
+          }
+
+          if (callback) {
+            callback(null, compressionRatio);
+          }
+
+          setImmediate(function() {
+            this.emit('getCompression', compressionRatio);
+          }.bind(this));
+
+        }.bind(this));
+      }
+    }.bind(this));
+  }.bind(this), callback);
+};
+
 // Set the resolution of the images captured. Automatically resets the camera and returns after completion.
 Camera.prototype.setResolution = function(resolution, callback) {
   this.queue.push(function (callback) {
     this._sendCommand("resolution", {"size":resolution}, function(err) {
       if (err) {
-        if (callback) {
-          callback(err);
-        }
-        return;
+        handleError.call(this, err, callback);
       } else {
         this._reset(function(err) {
+          if (err) {
+            handleError.call(this, err, callback);
+          }
+
           if (callback) {
-            callback(err);
+            callback();
           }
 
           setImmediate(function() {
             this.emit('resolution', resolution);
+          }.bind(this));
+
+        }.bind(this));
+      }
+    }.bind(this));
+  }.bind(this), callback);
+};
+
+// Gets the resolution of the images captured.
+Camera.prototype.getResolution = function(callback) {
+  this.queue.push(function (callback) {
+    this._sendCommand("getResolution", function(err, resolutionRaw) {
+      if (err) {
+        handleError.call(this, err, callback);
+      } else {
+        this._reset(function(err) {
+          var resolution = (resolutionRaw == 0x00) ? 'vga' : (resolutionRaw == 0x11) ? 'qvga' : 'qqvga';
+
+          if (err) {
+            handleError.call(this, err, callback);
+          }
+
+          if (callback) {
+            callback(null, resolution);
+          }
+
+          setImmediate(function() {
+            this.emit('getResolution', resolution);
           }.bind(this));
 
         }.bind(this));
@@ -354,20 +423,17 @@ Camera.prototype.takePicture = function(callback) {
     // Get data about how many bytes to read
     this._getImageMetaData(function foundMetaData(err, imageLength) {
       if (err) {
-        if (callback) {
-          callback(err);
-        }
-        return;
+        handleError.call(this, err, callback);
       } else {
         // Capture the actual data
         this._captureImageData(imageLength, function imageCaptured(err, image) {
           // Wait for the camera to be ready to continue
           if (err) {
-            if (callback) callback(err);
-            return;
-          } else {
-            this._resolveCapture(image, callback);
+            handleError.call(this, err, callback);
           }
+          
+          this._resolveCapture(image, callback);
+
         }.bind(this));
       }
     }.bind(this));
