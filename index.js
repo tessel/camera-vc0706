@@ -118,6 +118,38 @@ Camera.prototype._captureImageData = function(imgSize, callback) {
   }.bind(this));
 };
 
+// Checks if the cameras compression will cause garbled image data based on a blacklist of collected values. 
+// If the value is bad, the compression is set to the next highest compression which isn't broken
+Camera.prototype._checkCompressionBlacklist = function (resolution, compression) {
+
+  var compressionBlacklist = {
+    vga: [0x1b, 0x1c, 0x1d, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25,
+      0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f,
+      0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 
+      0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f, 0x40, 0x41, 0x42, 0x43, 
+      0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 
+      0x4e, 0x4f],
+    qvga: [0x10, 0x11, 0x12, 0x13, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc,
+      0xd, 0xe, 0xf]
+  }
+
+  function checkCompression (blacklist, compression, altCompression) {
+    if (blacklist.indexOf(compression) > -1) {
+      return altCompression;
+    } else {
+      return compression;
+    }
+  }
+
+  if (resolution == "qqvga") {
+    return compression;
+  } else if (resolution == "qvga") {
+    return checkCompression(compressionBlacklist.qvga, compression, 0x14);
+  } else {
+    return checkCompression(compressionBlacklist.vga, compression, 0x80);
+  }
+};
+
 Camera.prototype._getFrameBufferLength = function(callback) {
   this._sendCommand("bufferLength", callback);
 };
@@ -306,32 +338,39 @@ Camera.prototype.disable = function () {
 
 // Set the compression of the images captured. Automatically resets the camera and returns after completion.
 Camera.prototype.setCompression = function(compression, callback) {
-  this.queue.push(function (callback) {
-    this._sendCommand("compression", {
-      "ratio": Math.floor(compression*COMPRESSION_RANGE)<0 ? 0 : Math.floor(compression*COMPRESSION_RANGE)>COMPRESSION_RANGE ? COMPRESSION_RANGE : Math.floor(compression*COMPRESSION_RANGE)
-    }, function(err) {
-      if (err) {
-        handleError.call(this, err, callback);
-      } else {
-        this._reset(function(err) {
+  // Some compressions break the camera at certain resolutions. To fix this, we blacklist
+  // certain compression - resolution pairs
+  this.getResolution(function (err, resolution) {
+    if (err) {
+      handleError.call(this, err, callback);
+    }
+    this.queue.push(function (callback) {
+      this._sendCommand("compression", {
+        "ratio": this._checkCompressionBlacklist(resolution, Math.floor(compression*COMPRESSION_RANGE)<0 ? 0 : Math.floor(compression*COMPRESSION_RANGE)>COMPRESSION_RANGE ? COMPRESSION_RANGE : Math.floor(compression*COMPRESSION_RANGE))
+      }, function(err) {
+        if (err) {
+          handleError.call(this, err, callback);
+        } else {
+          this._reset(function(err) {
 
-          if (err) {
-            handleError.call(this, err, callback);
-          }
+            if (err) {
+              handleError.call(this, err, callback);
+            }
 
-          if (callback) {
-            callback();
-          }
+            if (callback) {
+              callback();
+            }
 
-          setImmediate(function() {
-            this.emit('compression', compression);
+            setImmediate(function() {
+              this.emit('compression', compression);
+            }.bind(this));
+
+            return;
           }.bind(this));
-
-          return;
-        }.bind(this));
-      }
-    }.bind(this));
-  }.bind(this), callback);
+        }
+      }.bind(this));
+    }.bind(this), callback);
+  }.bind(this));
 };
 
 // Gets the compression ratio of the images captured. Returns value from [0, 1].
