@@ -15,7 +15,7 @@ var notificationLED = tessel.led[3]; // Set up an LED to notify when we're takin
 
 // Wait for the camera module to say it's ready
 camera.on('ready', function() {
-  // Set the size of images. Options are 'vga' (640x320), 'qvga'(320x240) or 'qqvga' (160x120). Default is 'vga'. Note that the resolution is saved in Flash and will be persistent between power cycles.
+  // Set the size of images. Options are 'vga' (640x480), 'qvga'(320x240) or 'qqvga' (160x120). Default is 'vga'. Note that the resolution is saved in Flash and will be persistent between power cycles.
   camera.setResolution('vga', function(err) {
     if (err) {
       return console.log('Error setting resolution', err);
