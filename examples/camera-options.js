@@ -20,7 +20,7 @@ camera.on('ready', function() {
     if (err) {
       return console.log('Error setting resolution', err);
     }
-    // Set the compression of images. Should be a number between 0 and 255. Default is 0x35. Note that the compression is saved in Flash and will be persistent between power cycles.
+    // Set the compression of images. Should be a number between 0 and 1. Default is .4. Note that the compression is saved in Flash and will be persistent between power cycles.
     camera.setCompression(0.4, function(err) {
       if (err) {
         return console.log('Error setting compression', err);
