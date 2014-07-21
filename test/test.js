@@ -1,42 +1,112 @@
 var jpegSize = require('jpeg-size');
 var tessel = require('tessel');
-
 var portname = process.argv[2] || 'A';
-console.log('# listening on port', portname)
+var test = require('ttt');
+var async = require('async');
 
-var camera = require('../').use(tessel.port[portname]);
+async.series([
+  test('Connecting to camera module', function (t) {
+    camera = require('../').use(tessel.port[portname], {}, function (err, camera) {
+      console.log('callback')
+      t.ok(camera, 'The camera module object was not returned');
+      t.equal(err, undefined, 'There was an error connecting');
+      t.end();
+    });
+  }),
 
-console.log('1..7');
-
-camera.on('ready', function(err) {
-  if (err) return console.log('not ok - error on ready:', err);
-  console.log('ok - camera ready');
-
-  camera.setResolution('vga', function(err) {
-    if (err) return console.log('not ok - error setting resolution:', err);
-    console.log('ok - resolution set');
-
-    camera.setCompression(100, function(err) {
-      if (err) return console.log('not ok - error setting compression:', err);
-      console.log('ok - compression set');
-
-      camera.takePicture(function(err, image) {
-        if (err) return console.log('not ok - error taking image:', err);
-        console.log('ok - successfuly took image');
-
-        console.log(image.length > 0 ? 'ok' : 'not ok', '- picture length');
-
-        var size = jpegSize(image);
-        console.log(size.height == 480 ? 'ok' : 'not ok', '- jpeg height');
-        console.log(size.width == 640 ? 'ok' : 'not ok', '- jpeg width');
-
-        console.log('# done.');
-        camera.disable();
+  test('Set Resolution - vga', function (t) {
+    camera.setResolution('vga', function () {
+      camera.getResolution(function (err, resolution) {
+        t.equal(resolution, 'vga', "resolution not set correctly");
+        t.end();
       });
     });
-  });
-});
+  }),
 
-camera.on('error', function (err) {
-  console.log('not ok', '-', err);
-});
+  test('Set Resolution - qvga', function (t) {
+    camera.setResolution('qvga', function () {
+      camera.getResolution(function (err, resolution) {
+        t.equal(resolution, 'qvga', "resolution not set correctly");
+        t.end();
+      });
+    });
+  }),
+
+  test('Set Resolution - qqvga', function (t) {
+    camera.setResolution('qqvga', function () {
+      camera.getResolution(function (err, resolution) {
+        t.equal(resolution, 'qqvga', "resolution not set correctly");
+        t.end();
+      });
+    });
+  }),
+
+  test('Set Invalid Resolution - xxyyxx', function (t) {
+    camera.setResolution('xxyyxx', function (err) {
+      t.equal(err.message, "Resolution: xxyyxx is invalid. Valid resolutions are vga, qvga, qqvga", "invalid resolution should throw an error");
+      t.end();
+    });
+  }),
+
+  test('Set Compression - 0', function (t) {
+    camera.setCompression(0, function () {
+      camera.getCompression(function (err, compression) {
+        t.equal(compression, 0, "compression not set correctly");
+        t.end();
+      });
+    });
+  }), 
+
+  test('Set Compression - 1', function (t) {
+    camera.setCompression(1, function () {
+      camera.getCompression(function (err, compression) {
+        t.equal(compression, 1, "compression not set correctly");
+        t.end();
+      });
+    });
+  }),   
+  
+  test('Set Invalid Compression - 3.14', function (t) {
+    camera.setCompression(3.14, function (err) {
+      t.equal(err.message, "Compression: 3.14 is invalid. Valid compressions are between 0 and 1", "invalid resolution should throw an error");
+      t.end();
+    });
+  }), 
+
+  test('Take a picture', function (t) {
+    camera.setResolution('vga', function () {
+      camera.takePicture(function (err, image) {
+        var size = jpegSize(image);
+        t.equal(size.height, 480, "picture not taken correctly");
+        t.equal(size.width, 640, "picture not taken correctly");
+        t.end();
+        camera.disable();
+      })
+    })
+  }),
+
+  test('Take multiple pictures', function (t) {
+    function validatePicture (image, size) {
+      t.equal(size.height, 480, "picture not taken correctly");
+      t.equal(size.width, 640, "picture not taken correctly");
+    };
+
+    camera.setResolution('vga', function () {
+      camera.takePicture(function(err, image) {
+        camera.takePicture(function(err, image) {
+          validatePicture(image, jpegSize(image));
+          t.end();
+        });
+        validatePicture(image, jpegSize(image));
+      });
+      camera.takePicture(function(err, image) {
+        validatePicture(image, jpegSize(image));
+      });
+    })
+  }),
+
+
+  ], function(err) {
+    console.log('error running tests', err);
+  }
+);

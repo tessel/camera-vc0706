@@ -306,32 +306,36 @@ Camera.prototype.disable = function () {
 
 // Set the compression of the images captured. Automatically resets the camera and returns after completion.
 Camera.prototype.setCompression = function(compression, callback) {
-  this.queue.push(function (callback) {
-    this._sendCommand("compression", {
-      "ratio": Math.floor(compression*COMPRESSION_RANGE)<0 ? 0 : Math.floor(compression*COMPRESSION_RANGE)>COMPRESSION_RANGE ? COMPRESSION_RANGE : Math.floor(compression*COMPRESSION_RANGE)
-    }, function(err) {
-      if (err) {
-        handleError.call(this, err, callback);
-      } else {
-        this._reset(function(err) {
+  if (compression < 0 || compression > 1) {
+    callback(new Error("Compression: " + compression + " is invalid. Valid compressions are between 0 and 1"));
+  } else {
+    this.queue.push(function (callback) {
+      this._sendCommand("compression", {
+        "ratio": Math.floor(compression*COMPRESSION_RANGE)<0 ? 0 : Math.floor(compression*COMPRESSION_RANGE)>COMPRESSION_RANGE ? COMPRESSION_RANGE : Math.floor(compression*COMPRESSION_RANGE)
+      }, function(err) {
+        if (err) {
+          handleError.call(this, err, callback);
+        } else {
+          this._reset(function(err) {
 
-          if (err) {
-            handleError.call(this, err, callback);
-          }
+            if (err) {
+              handleError.call(this, err, callback);
+            }
 
-          if (callback) {
-            callback();
-          }
+            if (callback) {
+              callback();
+            }
 
-          setImmediate(function() {
-            this.emit('compression', compression);
+            setImmediate(function() {
+              this.emit('compression', compression);
+            }.bind(this));
+
+            return;
           }.bind(this));
-
-          return;
-        }.bind(this));
-      }
-    }.bind(this));
-  }.bind(this), callback);
+        }
+      }.bind(this));
+    }.bind(this), callback);
+  }
 };
 
 // Gets the compression ratio of the images captured. Returns value from [0, 1].
@@ -364,28 +368,33 @@ Camera.prototype.getCompression = function(callback) {
 
 // Set the resolution of the images captured. Automatically resets the camera and returns after completion.
 Camera.prototype.setResolution = function(resolution, callback) {
-  this.queue.push(function (callback) {
-    this._sendCommand("resolution", {"size":resolution}, function(err) {
-      if (err) {
-        handleError.call(this, err, callback);
-      } else {
-        this._reset(function(err) {
-          if (err) {
-            handleError.call(this, err, callback);
-          }
+  var validResolutions = Object.keys(vclib.resolutions);
+  if (validResolutions.indexOf(resolution) < 0) {
+    callback(new Error("Resolution: " + resolution + " is invalid. Valid resolutions are vga, qvga, qqvga"));
+  } else {
+    this.queue.push(function (callback) {
+      this._sendCommand("resolution", {"size":resolution}, function(err) {
+        if (err) {
+          handleError.call(this, err, callback);
+        } else {
+          this._reset(function(err) {
+            if (err) {
+              handleError.call(this, err, callback);
+            }
 
-          if (callback) {
-            callback();
-          }
+            if (callback) {
+              callback();
+            }
 
-          setImmediate(function() {
-            this.emit('resolution', resolution);
+            setImmediate(function() {
+              this.emit('resolution', resolution);
+            }.bind(this));
+
           }.bind(this));
-
-        }.bind(this));
-      }
-    }.bind(this));
-  }.bind(this), callback);
+        }
+      }.bind(this));
+    }.bind(this), callback);
+  }
 };
 
 // Gets the resolution of the images captured.

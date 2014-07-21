@@ -28,7 +28,9 @@
     "sink_q": "*"
   },
   "devDependencies": {
+    "async": "^0.9.0",
     "jpeg-size": "~0.0.1",
-    "tinytap": "~0.0.2"
+    "tinytap": "~0.0.2",
+    "ttt": "^1.0.3"
   }
 }
