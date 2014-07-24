@@ -6,6 +6,8 @@ var cameralib = require('../');
 
 var portname = process.argv[2] || 'A';
 
+test.count(11);
+
 var camera;
 async.series([
   test('Connecting to camera module', function (t) {
