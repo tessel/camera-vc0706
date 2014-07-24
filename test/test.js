@@ -1,12 +1,15 @@
 var jpegSize = require('jpeg-size');
 var tessel = require('tessel');
-var portname = process.argv[2] || 'A';
-var test = require('ttt');
+var test = require('tinytap');
 var async = require('async');
+var cameralib = require('../');
 
+var portname = process.argv[2] || 'A';
+
+var camera;
 async.series([
   test('Connecting to camera module', function (t) {
-    camera = require('../').use(tessel.port[portname], {}, function (err, camera) {
+    camera = cameralib.use(tessel.port[portname], {}, function (err, camera) {
       console.log('callback')
       t.ok(camera, 'The camera module object was not returned');
       t.equal(err, undefined, 'There was an error connecting');
