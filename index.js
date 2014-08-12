@@ -78,26 +78,24 @@ function Camera (hardware, options, callback) {
 util.inherits(Camera, events.EventEmitter);
 
 Camera.prototype._captureImageData = function(imgSize, callback) {
-
-   // Intialize SPI
-  var spi = this.hardware.SPI({role:'slave'});
-
   // Send the command to read the number of bytes
   this._readFrameBuffer(imgSize, function imageReadCommandSent(err) {
     // If there was a problem, report it
     if (err) {
       return callback(err);
     } else {
+      // Intialize SPI
+      var spi = this.hardware.SPI({role:'slave'});
       // Begin the transfer
       spi.receive(imgSize, function imageDataRead(err, image){
+        // Set SPI back to being a master
+        this.hardware.SPI({role:'master'});
         if (err) {
           if (callback) {
             callback(err);
           }
           return;
         } else {
-          // Close SPI
-          spi.close();
           if (callback) {
             callback(null, image);
           }
