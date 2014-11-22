@@ -47,10 +47,12 @@ async.series([
   }),
 
   test('Set Invalid Resolution - xxyyxx', function (t) {
-    camera.setResolution('xxyyxx', function (err) {
-      t.equal(err.message, "Resolution: xxyyxx is invalid. Valid resolutions are vga, qvga, qqvga", "invalid resolution should throw an error");
-      t.end();
-    });
+    function fn () {
+      camera.setResolution('xxyyxx');
+    }
+
+    t.throws(fn, /resolution.*invalid/i, "invalid resolution should throw an error");
+    t.end();
   }),
 
   test('Set Compression - 0', function (t) {
@@ -60,7 +62,7 @@ async.series([
         t.end();
       });
     });
-  }), 
+  }),
 
   test('Set Compression - 1', function (t) {
     camera.setCompression(1, function () {
@@ -69,14 +71,16 @@ async.series([
         t.end();
       });
     });
-  }),   
-  
+  }),
+
   test('Set Invalid Compression - 3.14', function (t) {
-    camera.setCompression(3.14, function (err) {
-      t.equal(err.message, "Compression: 3.14 is invalid. Valid compressions are between 0 and 1", "invalid resolution should throw an error");
-      t.end();
-    });
-  }), 
+    function fn () {
+      camera.setCompression(3.14);
+    }
+
+    t.throws(fn, /compression.*invalid/i, "invalid compression should throw an error");
+    t.end();
+  }),
 
   test('Take a picture', function (t) {
     camera.setResolution('vga', function () {
@@ -86,8 +90,8 @@ async.series([
         t.equal(size.width, 640, "picture not taken correctly");
         t.end();
         camera.disable();
-      })
-    })
+      });
+    });
   }),
 
   test('Take multiple pictures', function (t) {
@@ -107,7 +111,7 @@ async.series([
       camera.takePicture(function(err, image) {
         validatePicture(image, jpegSize(image));
       });
-    })
+    });
   }),
 
 
