@@ -6,7 +6,7 @@ var cameralib = require('../');
 
 var portname = process.argv[2] || 'A';
 
-test.count(11);
+test.count(31);
 
 var camera;
 async.series([
