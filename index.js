@@ -174,7 +174,7 @@ Camera.prototype._waitForImageReadACK = function (cb) {
   this.vclib.getCommandPacket('readFrameSPI', function foundCommand (err, command) {
     if (err) { return cb(err); }
 
-    this.uart.on('data', function dataACKParsing (data) {
+    var dataACKParsing = function (data) {
       this.vclib.parseIncoming(command, data, function vclibDataParsed(err, packet) {
         if (err || packet) {
 
@@ -183,7 +183,9 @@ Camera.prototype._waitForImageReadACK = function (cb) {
           cb(err);
         }
       }.bind(this));
-    }.bind(this));
+    }.bind(this);
+
+    this.uart.on('data', dataACKParsing);
   }.bind(this));
 };
 
