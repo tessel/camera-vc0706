@@ -38,7 +38,7 @@ function Camera (hardware, options, callback) {
   // Attempt to read the version of firmware
   this._getVersion(function(err, version) {
     if (err) { return cb(err); }
-    if (!version) { return cb(new Error("Unable to receive responses from module.")); }
+    if (!version) { return cb(new Error('Unable to receive responses from module.')); }
 
     if (options) {
       if (options.compression) {
@@ -73,7 +73,7 @@ Camera.prototype._captureImageData = function (imgSize, cb) {
 };
 
 Camera.prototype._getFrameBufferLength = function(callback) {
-  this._sendCommand("bufferLength", {}, callback);
+  this._sendCommand('bufferLength', {}, callback);
 };
 
 Camera.prototype._getImageMetaData = function (cb) {
@@ -88,11 +88,11 @@ Camera.prototype._getImageMetaData = function (cb) {
 
 // Get the version of firmware on the camera. Typically only used for debugging.
 Camera.prototype._getVersion = function (callback){
-  this._sendCommand("version", {}, callback);
+  this._sendCommand('version', {}, callback);
 };
 
 Camera.prototype._readFrameBuffer = function(length, callback) {
-  this._sendCommand("readFrameSPI", { length: length }, callback);
+  this._sendCommand('readFrameSPI', { length: length }, callback);
 };
 
 Camera.prototype._reset = function (cb) {
@@ -119,7 +119,7 @@ Camera.prototype._resolveCapture = function (image, cb) {
 };
 
 Camera.prototype._resumeFrameBuffer = function(callback) {
-  this._sendCommand("frameControl", { command: 'resume' }, callback);
+  this._sendCommand('frameControl', { command: 'resume' }, callback);
 };
 
 Camera.prototype._sendCommand = function (apiCommand, args, cb) {
@@ -160,14 +160,14 @@ Camera.prototype._sendCommand = function (apiCommand, args, cb) {
       this.uart.removeListener('data', UARTDataParser);
 
       // Signal an error
-      cb(new Error("No UART Response..."));
+      cb(new Error('No UART Response...'));
 
     }.bind(this), 2000);
   }.bind(this));
 };
 
 Camera.prototype._stopFrameBuffer = function(callback) {
-  this._sendCommand("frameControl", { command: 'stop' }, callback);
+  this._sendCommand('frameControl', { command: 'stop' }, callback);
 };
 
 Camera.prototype._waitForImageReadACK = function (cb) {
@@ -218,14 +218,14 @@ Camera.prototype.disable = function () {
 Camera.prototype.setCompression = function(compression, callback) {
 
   if (compression < 0 || compression > 1) {
-    throw new Error("Compression: " + compression + " is invalid. Valid compressions are between 0 and 1");
+    throw new Error('Compression: ' + compression + ' is invalid. Valid compressions are between 0 and 1');
   }
 
   var cb = this._wrapCallback(callback, 'compression');
   var args = { ratio: Math.floor(compression * COMPRESSION_RANGE) };
 
   this.queue.push(function (cb) {
-    this._sendCommand("compression", args, function(err) {
+    this._sendCommand('compression', args, function(err) {
       if (err) { return cb(err); }
 
       this._reset(cb);
@@ -240,7 +240,7 @@ Camera.prototype.getCompression = function(callback) {
   var cb = this._wrapCallback(callback, 'getCompression');
 
   this.queue.push(function (cb) {
-    this._sendCommand("getCompression", {}, function(err, compressionRatioRaw) {
+    this._sendCommand('getCompression', {}, function(err, compressionRatioRaw) {
       if (err) { return cb(err); }
 
       this._reset(function(err) {
@@ -260,13 +260,13 @@ Camera.prototype.getCompression = function(callback) {
 Camera.prototype.setResolution = function(resolution, callback) {
 
   if (!VCLib.resolutions.hasOwnProperty(resolution)) {
-    throw new Error("Resolution: " + resolution + " is invalid. Valid resolutions are vga, qvga, qqvga");
+    throw new Error('Resolution: ' + resolution + ' is invalid. Valid resolutions are vga, qvga, qqvga');
   }
 
   var cb = this._wrapCallback(callback, 'resolution');
 
   this.queue.push(function (cb) {
-    this._sendCommand("resolution", { size: resolution }, function(err) {
+    this._sendCommand('resolution', { size: resolution }, function(err) {
       if (err) { return cb(err); }
 
       this._reset(function (err) {
@@ -284,7 +284,7 @@ Camera.prototype.getResolution = function(callback) {
   var cb = this._wrapCallback(callback, 'getResolution');
 
   this.queue.push(function (cb) {
-    this._sendCommand("getResolution", {}, function(err, resolutionRaw) {
+    this._sendCommand('getResolution', {}, function(err, resolutionRaw) {
       if (err) { return cb(err); }
 
       this._reset(function(err) {
