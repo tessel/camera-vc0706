@@ -9,7 +9,7 @@
 
 var events = require('events');
 var util = require('util');
-var vclib = require('vclib');
+var VCLib = require('vclib');
 var Queue = require('sink_q');
 
 var COMPRESSION_RANGE = 255;
@@ -26,7 +26,7 @@ function Camera (hardware, options, callback) {
     }
   }
   // Set a new library for sending/receiving data
-  this.vclib = new vclib();
+  this.vclib = new VCLib();
   // Start up UART
   this.uart = hardware.UART({baudrate : 115200});
   // Turn the camera on!
@@ -257,7 +257,7 @@ Camera.prototype.getCompression = function(callback) {
 // Set the resolution of the images captured. Automatically resets the camera and returns after completion.
 Camera.prototype.setResolution = function(resolution, callback) {
 
-  if (!vclib.resolutions.hasOwnProperty(resolution)) {
+  if (!VCLib.resolutions.hasOwnProperty(resolution)) {
     throw new Error("Resolution: " + resolution + " is invalid. Valid resolutions are vga, qvga, qqvga");
   }
 
@@ -330,4 +330,4 @@ function use(hardware, options, callback) {
 module.exports.Camera = Camera;
 module.exports.use = use;
 module.exports.COMPRESSION_RANGE = COMPRESSION_RANGE;
-module.exports.resolutions = vclib.resolutions;
+module.exports.resolutions = VCLib.resolutions;
