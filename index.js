@@ -28,7 +28,7 @@ function Camera (hardware, options, callback) {
   // Set a new library for sending/receiving data
   this.vclib = new VCLib();
   // Start up UART
-  this.uart = hardware.UART({baudrate : 115200});
+  this.uart = hardware.UART({ baudrate: 115200 });
   // Turn the camera on!
   hardware.digital[2].output().high();
 
@@ -61,11 +61,11 @@ Camera.prototype._captureImageData = function (imgSize, cb) {
     if (err) { return cb(err); }
 
     // Intialize SPI
-    var spi = this.hardware.SPI({role:'slave'});
+    var spi = this.hardware.SPI({ role: 'slave' });
     // Begin the transfer
     spi.receive(imgSize, function imageDataRead(err, image){
       // Set SPI back to being a master
-      this.hardware.SPI({role:'master'});
+      this.hardware.SPI({ role: 'master' });
 
       cb(err, image);
     }.bind(this));
@@ -92,7 +92,7 @@ Camera.prototype._getVersion = function (callback){
 };
 
 Camera.prototype._readFrameBuffer = function(length, callback) {
-  this._sendCommand("readFrameSPI", {"length":length}, callback);
+  this._sendCommand("readFrameSPI", { length: length }, callback);
 };
 
 Camera.prototype._reset = function (cb) {
@@ -119,7 +119,7 @@ Camera.prototype._resolveCapture = function (image, cb) {
 };
 
 Camera.prototype._resumeFrameBuffer = function(callback) {
-  this._sendCommand("frameControl", {command:'resume'}, callback);
+  this._sendCommand("frameControl", { command: 'resume' }, callback);
 };
 
 Camera.prototype._sendCommand = function (apiCommand, args, cb) {
@@ -167,7 +167,7 @@ Camera.prototype._sendCommand = function (apiCommand, args, cb) {
 };
 
 Camera.prototype._stopFrameBuffer = function(callback) {
-  this._sendCommand("frameControl", {command:'stop'}, callback);
+  this._sendCommand("frameControl", { command: 'stop' }, callback);
 };
 
 Camera.prototype._waitForImageReadACK = function (cb) {
@@ -222,7 +222,7 @@ Camera.prototype.setCompression = function(compression, callback) {
   }
 
   var cb = this._wrapCallback(callback, 'compression');
-  var args = {"ratio": Math.floor(compression * COMPRESSION_RANGE)};
+  var args = { ratio: Math.floor(compression * COMPRESSION_RANGE) };
 
   this.queue.push(function (cb) {
     this._sendCommand("compression", args, function(err) {
@@ -266,7 +266,7 @@ Camera.prototype.setResolution = function(resolution, callback) {
   var cb = this._wrapCallback(callback, 'resolution');
 
   this.queue.push(function (cb) {
-    this._sendCommand("resolution", {"size":resolution}, function(err) {
+    this._sendCommand("resolution", { size: resolution }, function(err) {
       if (err) { return cb(err); }
 
       this._reset(function (err) {
