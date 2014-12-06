@@ -6,7 +6,7 @@ var cameralib = require('../');
 
 var portname = process.argv[2] || 'A';
 
-test.count(31);
+test.count(32);
 
 var camera;
 async.series([
@@ -129,8 +129,10 @@ async.series([
   }),
 
   test('Close the camera module', function (t) {
-    camera.disable();
-    t.end();
+    camera.disable(function (err) {
+      t.equal(err, undefined, "camera not disabled correctly");
+      t.end();
+    });
   }),
 
   ], function(err) {

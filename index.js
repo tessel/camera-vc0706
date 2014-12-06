@@ -208,10 +208,14 @@ Camera.prototype._wrapCallback = function (callback, event) {
 };
 
 // Close camera connection
-Camera.prototype.disable = function () {
-  this.queue.push(function () {
+Camera.prototype.disable = function (callback) {
+
+  var cb = this._wrapCallback(callback, 'disabled');
+
+  this.queue.push(function (cb) {
     this.uart.disable();
-  }.bind(this));
+    cb(null);
+  }.bind(this), cb);
 };
 
 // Set the compression of the images captured. Automatically resets the camera and returns after completion.
