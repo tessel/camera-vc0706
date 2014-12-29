@@ -56,22 +56,30 @@ function Camera(hardware, options, callback) {
 util.inherits(Camera, events.EventEmitter);
 
 Camera.prototype._captureImageData = function (imgSize, cb) {
-  // Send the command to read the number of bytes
-  this._readFrameBuffer(imgSize, function imageReadCommandSent(err) {
+
+      // Intialize SPI
+  var spi = this.hardware.SPI({ role: 'slave' });
+
+  spi.lock(function lockObtained(err, lock) { 
     if (err) { return cb(err); }
 
-    // Intialize SPI
-    var spi = this.hardware.SPI({ role: 'slave' });
-    // Begin the transfer
-    spi.receive(imgSize, function imageDataRead(err, image) {
-      // Set SPI back to being a master
-      this.hardware.SPI({ role: 'master' });
+    // Send the command to read the number of bytes
+    this._readFrameBuffer(imgSize, function imageReadCommandSent(err) {
+      if (err) { return cb(err); }
 
-      cb(err, image);
+
+      // Begin the transfer
+      lock.rawReceive(imgSize, function imageDataRead(err, image) {
+        // Set SPI back to being a master
+        this.hardware.SPI({ role: 'master' });
+
+        lock.release(function lockReleased() {
+          cb(err, image);
+        })
+      }.bind(this));
     }.bind(this));
   }.bind(this));
 };
-
 Camera.prototype._getFrameBufferLength = function (callback) {
   this._sendCommand('bufferLength', {}, callback);
 };
