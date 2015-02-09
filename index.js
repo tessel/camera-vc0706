@@ -27,6 +27,8 @@ function Camera(hardware, options, callback) {
   }
   // Set a new library for sending/receiving data
   this.vclib = new VCLib();
+  // Set the resolutions
+  this.resolutions = this.vclib.resolutions;
   // Start up UART
   this.uart = hardware.UART({ baudrate: 115200 });
   // Turn the camera on!
@@ -344,4 +346,3 @@ function use(hardware, options, callback) {
 module.exports.Camera = Camera;
 module.exports.use = use;
 module.exports.COMPRESSION_RANGE = COMPRESSION_RANGE;
-module.exports.resolutions = VCLib.resolutions;
