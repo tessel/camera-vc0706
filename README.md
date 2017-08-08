@@ -1,6 +1,8 @@
 **[UNMAINTAINED] This library does not have a maintainer. The source code and repository will be kept at this URL indefinitely. If you'd like to help maintain this codebase, create an issue on this repo explaining why you'd like to become a maintainer and tag @tessel/maintainers in the body.**
 
 #Camera
+
+[![Greenkeeper badge](https://badges.greenkeeper.io/tessel/camera-vc0706.svg)](https://greenkeeper.io/)
 Driver for the camera-vc0706 Tessel camera module. The hardware documentation for this module can be found [here](https://github.com/tessel/hardware/blob/master/modules-overview.md#camera).
 
 If you run into any issues you can ask for support on the [Camera Module Forums](http://forums.tessel.io/category/camera).
